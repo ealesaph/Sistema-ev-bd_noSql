@@ -1,11 +1,13 @@
 #Librerias que vamos a usar :D
+#Esto pal readme -> Para instalar las dependencias, ejecuta el siguiente comando en tu terminal:
+#pip install -r requirements.txt
 
-Flask==2.3.3
-Flask-SQLAlchemy==3.0.5
-Flask-PyMongo==2.3.0
-psycopg2-binary==2.9.9
-pymongo==4.6.0
-python-dotenv==1.0.0
-PyJWT==2.8.0
-bcrypt==4.0.1
-flask-cors==4.0.0
+Flask
+Flask-SQLAlchemy
+Flask-PyMongo
+psycopg2-binary
+pymongo
+python-dotenv
+PyJWT
+bcrypt
+flask-cors
