@@ -1,11 +1,13 @@
 #Librerias que vamos a usar :D
+#Esto pal readme -> Para instalar las dependencias, ejecuta el siguiente comando en tu terminal:
+#pip install -r requirements.txt
 
-Flask==2.3.3 #Framework web. lo utilizaremos para manejar HTTP y el Server :D
-Flask-SQLAlchemy==3.0.5 #Traduce clases de Python a tablas SQL
-Flask-PyMongo==2.3.0 #Traduce diccionarios Python a documentos MongoDB
-psycopg2-binary==2.9.9 #Conecta PYthon con PostgreSQL
-pymongo==4.6.0 #Conecta Python con MongoDB
-python-dotenv==1.0.0 #Lee Variables de entorno (Así no ponemos contraseña en el código :DD)
-PyJWT==2.8.0 #Genera y valida tokens JWT (Para autenticación :D)
-bcrypt==4.0.1 #Lo vamos a usar para hacer Hashing
-flask-cors==4.0.0 #Permite que la web acepte peticiones desde otros dominios, no entiendo bien pero decía que lo necesitabamos con el Framework FLASK, necesito averiguar mas sobre esto
+Flask
+Flask-SQLAlchemy
+Flask-PyMongo
+psycopg2-binary
+pymongo
+python-dotenv
+PyJWT
+bcrypt
+flask-cors
