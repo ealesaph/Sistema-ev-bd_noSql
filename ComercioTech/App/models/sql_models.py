@@ -9,7 +9,7 @@ from datetime import datetime
 class Cliente(db_sql.Model):
     #Heredar el modelo de db_sql.Model
     #Este comando es parte del FLASK-SQLAlchemy
-    __tablename__ = 'clientes' 
+    __tablename__ = 'cliente' 
     #Esto es para que SQLAlchemy sepa como se llama la tabla en el Postre
     
     #Luego inserto las tablas :)
@@ -40,16 +40,16 @@ class Cliente(db_sql.Model):
 #Direccion_id no me hace sentido
 class Direccion(db_sql.Model):
     #Nombre Tabla
-    __tablename__ = 'direcciones'
+    __tablename__ = 'direccion'
     #Columnas
     id_direccion = db_sql.Column(db_sql.Integer, primary_key = True)
     calle = db_sql.Column(db_sql.String(200), nullable = False)
     numero = db_sql.Column(db_sql.String(20))
     ciudad = db_sql.Column(db_sql.String(100), nullable = False)
     region = db_sql.Column(db_sql.String(100))
-    pais = db_sql.Column(db_sql.String(100), default = 'Chile', nullable = False)
+    pais = db_sql.Column(db_sql.String(100), server_default = 'Chile', nullable = False)
     codigo_postal = db_sql.Column(db_sql.String(20))
-    tipo = db_sql.Column(db_sql.String(20), default = 'Envio')
+    tipo = db_sql.Column(db_sql.String(20), default = 'ENVIO')
     #Relaciones
     #No hay relaciones :))
     #Constraints
@@ -60,7 +60,7 @@ class Direccion(db_sql.Model):
 
 #Modulo Seguridad
 class Usuario(db_sql.Model):
-    __tablename__ = 'usuarios'
+    __tablename__ = 'usuario'
     #Tablas
     id_usuario = db_sql.Column(db_sql.Integer, primary_key = True)
     nombre = db_sql.Column(db_sql.String(100), nullable = False)
