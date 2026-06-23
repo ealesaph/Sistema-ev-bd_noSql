@@ -28,6 +28,8 @@ class Cliente(db_sql.Model):
     # RELACIONES sin crear tablas, solo crean relaciones lógicas
     
     direcciones = db_sql.relationship('Direccion', backref='cliente', lazy=True)
+
+    
     #backref crea un atributo cliente en la clase Direccion
     # lazy=True Carga perezosa (Solo carga las direcciones cuando las necesites)
     
