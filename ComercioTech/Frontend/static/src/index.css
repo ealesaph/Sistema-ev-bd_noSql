@@ -196,18 +196,20 @@ header {
 .page_container {
     margin-top: 5rem;
     margin-bottom: 5rem;
+    background-color: #c60000;
 }
 
 .page_title {
-    background-color: #00264D;
+    background-color: transparent;
     color: aliceblue;
     padding: 2.5rem 2rem;
     font-size: 2.5rem;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: none;
 }
+
 
 .personal_card {
     border: none !important;
@@ -273,7 +275,7 @@ header {
 }
 
 .landing-hero {
-    background: linear-gradient(135deg, #00264D 0%, #1a52c5 100%);
+    background: linear-gradient(135deg, #c60000 0%, #1a52c5 100%);
     color: white;
     padding: 6rem 2rem;
     text-align: center;
@@ -303,7 +305,7 @@ header {
 
 .landing-cta-btn {
     background-color: #ffffff;
-    color: #00264D;
+    color: #c60000;
     font-size: 1.1rem;
     font-weight: 700;
     padding: 1rem 2.5rem;
@@ -329,7 +331,7 @@ header {
 .landing-section-title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: #00264D;
+    color: #c60000;
     margin-bottom: 3.5rem;
 }
 
@@ -365,7 +367,7 @@ header {
 .testimonial-name {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #00264D;
+    color: #c60000;
     margin: 0 0 0.2rem 0;
 }
 
