@@ -394,6 +394,7 @@ header {
     font-family: Georgia, serif;
 }
 
+
 @media (max-width: 1024px) {
     .main_navbar, .lower_navbar {
         padding: 10px 40px;
