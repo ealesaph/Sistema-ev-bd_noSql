@@ -14,9 +14,6 @@ export default function MainHeader () {
                         </Link>
                     </div>
                     <SearchBar />
-                    <div className="carrito_container">
-                        <i className="bi bi-cart"></i>
-                    </div>
                 </nav>
                 <LowerHeader />
             </header>
