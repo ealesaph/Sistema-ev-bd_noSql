@@ -17,6 +17,7 @@ class Usuario(db_sql.Model):
     __tablename__ = 'usuario'
     #Tablas
     id_usuario = db_sql.Column(db_sql.Integer, primary_key = True)
+    id_rol = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('rol.id_rol'), nullable = False)
     nombre = db_sql.Column(db_sql.String(100), nullable = False)
     apellido = db_sql.Column(db_sql.String(100), nullable = False)
     email = db_sql.Column(db_sql.String(150), nullable = False, unique=True)
@@ -32,6 +33,7 @@ class Auditoria(db_sql.Model):
     __tablename__ = 'auditoria'
     #Tablas
     id_auditoria = db_sql.Column(db_sql.Integer, primary_key = True)
+    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
     tabla_afectada = db_sql.Column(db_sql.String(100), nullable = False)
     operacion = db_sql.Column(db_sql.String(10), nullable = False)
     datos_anteriores = db_sql.Column(db_sql.JSONB)
@@ -51,14 +53,17 @@ class LogAuditoriaSeguridad(db_sql.Model):
     __tablename__ = 'log_auditoria_seguridad'
     #Tablas
     id_log = db_sql.Column(db_sql.Integer, primary_key = True)
+    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
+    id_aprobador = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'))
     evento = db_sql.Column(db_sql.String(100), nullable = False)
     descripcion = db_sql.Column(db_sql.Text)
     ip_origen = db_sql.Column(db_sql.INET)
-    exitoso = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    exitoso = db_sql.Column(db_sql.Boolean, default = False, nullable = False)
     fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     
     #Relaciones
-    usuario = db_sql.relationship('Usuario', backref='logs_auditoria', lazy=True)
+    usuario_solicitante = db_sql.relationship('Usuario', backref='logs_auditoria', lazy=True)
+    usuario_aprobador = db_sql.relationship('Usuario', backref='logs_auditoria_aprobadas', lazy=True)
     
 class SolicitudEliminacion(db_sql.Model):
     __tablename__ = 'solicitud_eliminacion'
@@ -66,15 +71,16 @@ class SolicitudEliminacion(db_sql.Model):
     id_solicitud = db_sql.Column(db_sql.Integer, primary_key = True)
     id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
     tabla_usuario = db_sql.Column(db_sql.String(100), nullable = False)
-    id_aprobador= db_sql.Column(db_sql.Integer, nullable = False)
+    id_aprobador= db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'))
     motivo = db_sql.Column(db_sql.Text, nullable = False)
     estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable = False)
     fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     fecha_resolucion = db_sql.Column(db_sql.DateTime)
     
     #Relaciones
-    usuario = db_sql.relationship('Usuario', backref='solicitudes_eliminacion', lazy=True)
-    
+    usuario_solicitante = db_sql.relationship('Usuario', backref='solicitudes_eliminacion', lazy=True)
+    usuario_aprobador = db_sql.relationship('Usuario', backref='solicitudes_eliminacion_aprobadas', lazy=True)
+
     #Constraints
     __table_args__ = (
         CheckConstraint("estado IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')", name='check_estado_solicitud'),
@@ -94,7 +100,7 @@ class Cliente(db_sql.Model):
     #Cliente
     id_cliente = db_sql.Column(db_sql.Integer, primary_key = True)
     nombre = db_sql.Column(db_sql.String(100), nullable=False)
-    apellido = db_sql.Column(db_sql.String(100), nullable=False, unique=True)
+    apellido = db_sql.Column(db_sql.String(100), nullable=False)
     #El nullable es para que sea Obligatorio
     email = db_sql.Column(db_sql.String(150), nullable=False, unique=True)
     telefono = db_sql.Column(db_sql.String(20))
@@ -121,6 +127,8 @@ class Direccion(db_sql.Model):
     __tablename__ = 'direccion'
     #Columnas
     id_direccion = db_sql.Column(db_sql.Integer, primary_key = True)
+    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable = False)
+    id_proveedor = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('proveedor.id_proveedor'), nullable = True)
     calle = db_sql.Column(db_sql.String(200), nullable = False)
     numero = db_sql.Column(db_sql.String(20))
     ciudad = db_sql.Column(db_sql.String(100), nullable = False)
@@ -158,29 +166,30 @@ class Proveedor(db_sql.Model):
     
 class PagoProveedor(db_sql.Model):
     #Nombre Tabla
-    __tablename__ = 'PagoProveedor'
+    __tablename__ = 'pago_proveedor'
     #Columnas
     id_pago = db_sql.Column(db_sql.Integer, primary_key=True)
     monto = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable = False)
     metodo_pago = db_sql.Column(db_sql.String(50), nullable=False)
     estado = db_sql.Column(db_sql.String(20), default ='PENDIENTE', nullable=False)
     referencia = db_sql.Column(db_sql.String(100))
-    fecha_pago = db_sql.Coumn(db_sql.Date)
+    fecha_pago = db_sql.Column(db_sql.Date)
     fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
     #Relaciones
-    proveedor = db_sql.relationship('Proveedor', backref='PagoProveedor', lazy=True)
+    proveedor = db_sql.relationship('Proveedor', backref='pago_proveedor', lazy=True)
     #Constraints
     __table_args__ = (
-        CheckConstraint("monto > 10", name='chequear_precio_positivo'),
+        CheckConstraint("monto > 0", name='chequear_precio_positivo'),
         CheckConstraint("estado IN ('PENDIENTE', 'PAGADO', 'ANULADO')",name='check_estado_proveedor'),
     )
     
 #Modulo Inventario
 class Producto(db_sql.Model):
 #Nombre Tabla
-    __tablename__= 'Producto'
+    __tablename__= 'producto'
 #Columnas
     id_producto = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_proveedor = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('proveedor.id_proveedor'), nullable=False)
     nombre = db_sql.Column(db_sql.String(150), nullable=False)
     descripcion = db_sql.Column(db_sql.Text)
     precio = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable=False)
@@ -188,24 +197,26 @@ class Producto(db_sql.Model):
     activo = db_sql.Column(db_sql.Bool, default=True, nullable=False)
     fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
 #Relaciones
-    proveedor = db_sql.relationship('Proveedor', backref='Producto', lazy=True)
+    proveedor = db_sql.relationship('Proveedor', backref='producto', lazy=True)
 #Constraints
 
 
 #Modulo Pedidos y Facturacion
 class Pedido(db_sql.Model):
 #Nombre de la tabla
-    __tablename__ = 'Pedido'
+    __tablename__ = 'pedido'
 #Columnas
     id_pedido = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
+    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable=False)
     estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable=False)
     fecha_pedido = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
     fecha_entrega = db_sql.Column(db_sql.DateTime)
     total = db_sql.Column(db_sql.Numeric(precision=12, scale=2), default=0, nullable=False)
     observaciones = db_sql.Column(db_sql.Text)
 #Relaciones
-    cliente = db_sql.relationship('Cliente', backref='pedidos', lazy=True)
-    usuario = db_sql.relationship('Usuario', backref='pedidos', lazy=True)  
+    cliente = db_sql.relationship('Cliente', backref='pedido', lazy=True)
+    usuario = db_sql.relationship('Usuario', backref='pedido', lazy=True)  
 #Constraints
     __table_args__ = (
         CheckConstraint("estado IN ('PENDIENTE', 'CONFIRMADO', 'ENTREGADO', 'CANCELADO')", name='check_estado_pedido'),
@@ -214,8 +225,10 @@ class Pedido(db_sql.Model):
 
 #------
 class DetallePedido(db_sql.Model):
-    __tablename__ = 'DetallePedido'
+    __tablename__ = 'detalle_pedido'
     id_detalle = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_pedido = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('pedido.id_pedido'), nullable=False)
+    id_producto = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('producto.id_producto'), nullable=False)
     cantidad = db_sql.Column(db_sql.Integer, nullable=False)
     precio_unitario = db_sql.Column(db_sql.Numeric(precision=10, scale=2), nullable=False)
     descuento = db_sql.Column(db_sql.Numeric(precision=5, scale=2),default=0)
@@ -225,8 +238,8 @@ class DetallePedido(db_sql.Model):
     )
     
     # Relaciones
-    pedido_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Pedido.id_pedido'), nullable=False)
-    producto_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Producto.id_producto'), nullable=False)
+    pedido = db_sql.relationship('Pedido', backref='detalles', lazy=True)
+    producto = db_sql.relationship('Producto', backref='detalles', lazy=True)
     
     # Constraints
     __table_args__ = (
@@ -236,8 +249,10 @@ class DetallePedido(db_sql.Model):
     )
     
 class Factura(db_sql.Model):
-    __tablename__ = 'Factura'
+    __tablename__ = 'factura'
     id_factura = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_pedido = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('pedido.id_pedido'), nullable=False)
+    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
     numero_factura = db_sql.Column(db_sql.String(50), unique=True, nullable=False)
     fecha_emision = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
     monto_neto = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable=False)
@@ -246,9 +261,9 @@ class Factura(db_sql.Model):
     estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable=False)
     
     # Relaciones
-    pedido_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Pedido.id_pedido'), nullable=False)
-    cliente_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Cliente.id_cliente'), nullable=False)
-    
+    pedido = db_sql.relationship('Pedido', backref='facturas', lazy=True)
+    cliente = db_sql.relationship('Cliente', backref='facturas', lazy=True)
+
     # Constraints
     __table_args__ = (
         CheckConstraint("monto_total >= 0", name='check_monto_total_factura_positivo'),

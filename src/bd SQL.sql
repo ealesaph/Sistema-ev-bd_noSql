@@ -36,6 +36,7 @@ CREATE TABLE Auditoria (
 CREATE TABLE LogAuditoriaSeguridad (
     id_log          SERIAL          PRIMARY KEY,
     id_usuario      INT             REFERENCES Usuario(id_usuario),
+    id_aprobador    INT             REFERENCES Usuario(id_usuario),
     evento          VARCHAR(100)    NOT NULL,
     descripcion     TEXT,
     ip_origen       INET,
