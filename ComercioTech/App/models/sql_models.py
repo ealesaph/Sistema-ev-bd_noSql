@@ -98,6 +98,15 @@ class PagoProveedor(db_sql.Model):
     )
     
 #Modulo Inventario
+class Producto(db_sql.Model):
+#Nombre Tabla
+    __tablename__= 'Producto'
+#Columnas
+    id_producto = db_sql.Column(db_sql.Integer, primary_key=True)
+    
+#Relaciones
+    provee
+#Constraints
 
 #Modulo Pedidos y Facturacion
 
