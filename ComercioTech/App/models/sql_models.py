@@ -3,6 +3,84 @@ from sqlalchemy import CheckConstraint
 # La idea es permitir definir tablas y hacer consultas
 from datetime import datetime
 #Este es para poner la fecha de registro automáticamente
+#Modulo Seguridad
+class Rol(db_sql.Model):
+    __tablename__ = 'rol'
+    #Tablas
+    id_rol = db_sql.Column(db_sql.Integer, primary_key = True)
+    nombre = db_sql.Column(db_sql.String(50), nullable = False, unique=True)
+    descripcion = db_sql.Column(db_sql.String(200))
+    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)   
+    
+class Usuario(db_sql.Model):
+    __tablename__ = 'usuario'
+    #Tablas
+    id_usuario = db_sql.Column(db_sql.Integer, primary_key = True)
+    nombre = db_sql.Column(db_sql.String(100), nullable = False)
+    apellido = db_sql.Column(db_sql.String(100), nullable = False)
+    email = db_sql.Column(db_sql.String(150), nullable = False, unique=True)
+    contrasena_hash = db_sql.Column(db_sql.String(255), nullable = False)
+    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
+    ultimo_login = db_sql.Column(db_sql.DateTime)
+    
+    #Relaciones
+    rol = db_sql.relationship('Rol', backref='usuarios', lazy=True)
+    
+class Auditoria(db_sql.Model):
+    __tablename__ = 'auditoria'
+    #Tablas
+    id_auditoria = db_sql.Column(db_sql.Integer, primary_key = True)
+    tabla_afectada = db_sql.Column(db_sql.String(100), nullable = False)
+    operacion = db_sql.Column(db_sql.String(10), nullable = False)
+    datos_anteriores = db_sql.Column(db_sql.JSONB)
+    datos_nuevos = db_sql.Column(db_sql.JSONB)
+    ip_origen = db_sql.Column(db_sql.INET)
+    fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
+    
+    #Relaciones
+    usuario = db_sql.relationship('Usuario', backref='auditorias', lazy=True)
+    
+    #Constraints
+    __table_args__ = (
+        CheckConstraint("operacion IN ('INSERT', 'UPDATE', 'DELETE', 'SELECT')", name='check_operacion_valida'),
+    )
+    
+class LogAuditoriaSeguridad(db_sql.Model):
+    __tablename__ = 'log_auditoria_seguridad'
+    #Tablas
+    id_log = db_sql.Column(db_sql.Integer, primary_key = True)
+    evento = db_sql.Column(db_sql.String(100), nullable = False)
+    descripcion = db_sql.Column(db_sql.Text)
+    ip_origen = db_sql.Column(db_sql.INET)
+    exitoso = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
+    
+    #Relaciones
+    usuario = db_sql.relationship('Usuario', backref='logs_auditoria', lazy=True)
+    
+class SolicitudEliminacion(db_sql.Model):
+    __tablename__ = 'solicitud_eliminacion'
+    #Tablas
+    id_solicitud = db_sql.Column(db_sql.Integer, primary_key = True)
+    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
+    tabla_usuario = db_sql.Column(db_sql.String(100), nullable = False)
+    id_aprobador= db_sql.Column(db_sql.Integer, nullable = False)
+    motivo = db_sql.Column(db_sql.Text, nullable = False)
+    estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable = False)
+    fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
+    fecha_resolucion = db_sql.Column(db_sql.DateTime)
+    
+    #Relaciones
+    usuario = db_sql.relationship('Usuario', backref='solicitudes_eliminacion', lazy=True)
+    
+    #Constraints
+    __table_args__ = (
+        CheckConstraint("estado IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')", name='check_estado_solicitud'),
+    )
+
+
 
 #Modulo Clientes
 #Revisar Forma normal Apellido -> A.Paterno, A.Materno
@@ -103,26 +181,76 @@ class Producto(db_sql.Model):
     __tablename__= 'Producto'
 #Columnas
     id_producto = db_sql.Column(db_sql.Integer, primary_key=True)
-    
+    nombre = db_sql.Column(db_sql.String(150), nullable=False)
+    descripcion = db_sql.Column(db_sql.Text)
+    precio = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable=False)
+    stock = db_sql.Column(db_sql.Integer, default=0)
+    activo = db_sql.Column(db_sql.Bool, default=True, nullable=False)
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
 #Relaciones
-    provee
+    proveedor = db_sql.relationship('Proveedor', backref='Producto', lazy=True)
 #Constraints
 
+
 #Modulo Pedidos y Facturacion
+class Pedido(db_sql.Model):
+#Nombre de la tabla
+    __tablename__ = 'Pedido'
+#Columnas
+    id_pedido = db_sql.Column(db_sql.Integer, primary_key=True)
+    estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable=False)
+    fecha_pedido = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
+    fecha_entrega = db_sql.Column(db_sql.DateTime)
+    total = db_sql.Column(db_sql.Numeric(precision=12, scale=2), default=0, nullable=False)
+    observaciones = db_sql.Column(db_sql.Text)
+#Relaciones
+    cliente = db_sql.relationship('Cliente', backref='pedidos', lazy=True)
+    usuario = db_sql.relationship('Usuario', backref='pedidos', lazy=True)  
+#Constraints
+    __table_args__ = (
+        CheckConstraint("estado IN ('PENDIENTE', 'CONFIRMADO', 'ENTREGADO', 'CANCELADO')", name='check_estado_pedido'),
+        CheckConstraint("total >= 0", name='check_total_positivo'),
+    )
 
-#Modulo Seguridad
-class Usuario(db_sql.Model):
-    __tablename__ = 'usuario'
-    #Tablas
-    id_usuario = db_sql.Column(db_sql.Integer, primary_key = True)
-    nombre = db_sql.Column(db_sql.String(100), nullable = False)
-    apellido = db_sql.Column(db_sql.String(100), nullable = False)
-    email = db_sql.Column(db_sql.String(150), nullable = False, unique=True)
-    contrasena_hash = db_sql.Column(db_sql.String(255), nullable = False)
-    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
-    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
-    ultimo_login = db_sql.Column(db_sql.DateTime)
+#------
+class DetallePedido(db_sql.Model):
+    __tablename__ = 'DetallePedido'
+    id_detalle = db_sql.Column(db_sql.Integer, primary_key=True)
+    cantidad = db_sql.Column(db_sql.Integer, nullable=False)
+    precio_unitario = db_sql.Column(db_sql.Numeric(precision=10, scale=2), nullable=False)
+    descuento = db_sql.Column(db_sql.Numeric(precision=5, scale=2),default=0)
+    subtotal = db_sql.Column(
+        db_sql.Numeric(12, 2),
+        db_sql.Computed("cantidad * precio_unitario * (1 - descuento / 100)", persisted=True)
+    )
     
-    #Relaciones
-    rol = db_sql.relationship('Rol', backref='usuarios', lazy=True)
-
+    # Relaciones
+    pedido_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Pedido.id_pedido'), nullable=False)
+    producto_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Producto.id_producto'), nullable=False)
+    
+    # Constraints
+    __table_args__ = (
+    CheckConstraint("cantidad > 0", name='check_cantidad_positiva'),
+    CheckConstraint("precio_unitario >= 0", name='check_precio_unitario_positivo'),
+    CheckConstraint("subtotal >= 0", name='check_subtotal_positivo'),
+    )
+    
+class Factura(db_sql.Model):
+    __tablename__ = 'Factura'
+    id_factura = db_sql.Column(db_sql.Integer, primary_key=True)
+    numero_factura = db_sql.Column(db_sql.String(50), unique=True, nullable=False)
+    fecha_emision = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
+    monto_neto = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable=False)
+    impuesto = db_sql.Column(db_sql.Numeric(precision=5, scale=2), default=19.00, nullable=False)
+    monto_total = db_sql.Column(db_sql.Numeric(precision=12, scale=2), default=0, nullable=False)
+    estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable=False)
+    
+    # Relaciones
+    pedido_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Pedido.id_pedido'), nullable=False)
+    cliente_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('Cliente.id_cliente'), nullable=False)
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("monto_total >= 0", name='check_monto_total_factura_positivo'),
+        CheckConstraint("estado IN ('EMITIDA', 'PAGADA', 'ANULADA')", name='check_estado_factura')
+    )

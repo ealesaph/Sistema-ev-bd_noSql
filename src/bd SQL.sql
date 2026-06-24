@@ -5,7 +5,7 @@
 CREATE TABLE Rol (
     id_rol          SERIAL          PRIMARY KEY,
     nombre          VARCHAR(50)     NOT NULL UNIQUE,
-    descripcion     TEXT,
+    descripcion     VARCHAR(200),
     activo          BOOLEAN         NOT NULL DEFAULT TRUE,
     fecha_creacion  TIMESTAMP       NOT NULL DEFAULT NOW()
 );
@@ -30,7 +30,7 @@ CREATE TABLE Auditoria (
     datos_anteriores JSONB,
     datos_nuevos    JSONB,
     ip_origen       INET,
-    fecha_hora      TIMESTAMP       NOT NULL DEFAULT NOW()
+    fecha_accion      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE LogAuditoriaSeguridad (
@@ -40,7 +40,7 @@ CREATE TABLE LogAuditoriaSeguridad (
     descripcion     TEXT,
     ip_origen       INET,
     exitoso         BOOLEAN         NOT NULL DEFAULT TRUE,
-    fecha_hora      TIMESTAMP       NOT NULL DEFAULT NOW()
+    fecha_accion    TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE SolicitudEliminacion (
@@ -122,7 +122,6 @@ CREATE TABLE Producto (
     descripcion     TEXT,
     precio_unitario NUMERIC(10,2)   NOT NULL CHECK (precio_unitario >= 0),
     stock           INT             NOT NULL DEFAULT 0 CHECK (stock >= 0),
-    unidad_medida   VARCHAR(30),
     activo          BOOLEAN         NOT NULL DEFAULT TRUE,
     fecha_creacion  TIMESTAMP       NOT NULL DEFAULT NOW()
 );
@@ -149,7 +148,7 @@ CREATE TABLE DetallePedido (
     id_producto     INT             NOT NULL REFERENCES Producto(id_producto),
     cantidad        INT             NOT NULL CHECK (cantidad > 0),
     precio_unitario NUMERIC(10,2)   NOT NULL CHECK (precio_unitario >= 0),
-    descuento       NUMERIC(5,2)    NOT NULL DEFAULT 0,
+    descuento       NUMERIC(5,2)    DEFAULT 0,
     subtotal        NUMERIC(12,2)   GENERATED ALWAYS AS
                         (cantidad * precio_unitario * (1 - descuento / 100)) STORED,
     UNIQUE (id_pedido, id_producto)
@@ -159,14 +158,13 @@ CREATE TABLE Factura (
     id_factura      SERIAL          PRIMARY KEY,
     id_pedido       INT             NOT NULL UNIQUE REFERENCES Pedido(id_pedido),
     id_cliente      INT             NOT NULL REFERENCES Cliente(id_cliente),
-    numero_folio    VARCHAR(50)     NOT NULL UNIQUE,
+    numero_factura  VARCHAR(50)     NOT NULL UNIQUE,
     fecha_emision   TIMESTAMP       NOT NULL DEFAULT NOW(),
     monto_neto      NUMERIC(12,2)   NOT NULL CHECK (monto_neto >= 0),
     impuesto        NUMERIC(5,2)    NOT NULL DEFAULT 19.00,
     monto_total     NUMERIC(12,2)   NOT NULL CHECK (monto_total >= 0),
     estado          VARCHAR(20)     NOT NULL DEFAULT 'EMITIDA'
                         CHECK (estado IN ('EMITIDA','PAGADA','ANULADA')),
-    pdf_url         TEXT
 );
 
 -- ============================================================
