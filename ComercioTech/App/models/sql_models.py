@@ -1,4 +1,4 @@
-from App.config.database_config import db_sql
+from app.config.database_config import db_sql
 from sqlalchemy import CheckConstraint
 # La idea es permitir definir tablas y hacer consultas
 from datetime import datetime
@@ -57,6 +57,49 @@ class Direccion(db_sql.Model):
     __table_args__ = (
         CheckConstraint("tipo IN ('ENVIO', 'FACTURACION', 'PRINCIPAL')", name='check_estado_valido'),
         )
+
+#Modulo Proveedores
+class Proveedor(db_sql.Model):
+    #Nombre Tabla
+    __tablename__ = 'proveedor'
+    #Columnas
+    id_proveedor = db_sql.Column(db_sql.Integer, primary_key = True)
+    nombre = db_sql.Column(db_sql.String(150), nullable = False)
+    rut = db_sql.Column(db_sql.String(20), unique=True)
+    email = db_sql.Column(db_sql.String(150))
+    telefono = db_sql.Column(db_sql.String(150))
+    activo = db_sql.Column(db_sql.Bool, default = True, nullable=False)
+    fecha_registro = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
+    
+    
+    #Relaciones
+    direccion = db_sql.relationship('Direccion', backref='proveedor', lazy=True)
+    
+    #Constraints
+    #No hay
+    
+class PagoProveedor(db_sql.Model):
+    #Nombre Tabla
+    __tablename__ = 'PagoProveedor'
+    #Columnas
+    id_pago = db_sql.Column(db_sql.Integer, primary_key=True)
+    monto = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable = False)
+    metodo_pago = db_sql.Column(db_sql.String(50), nullable=False)
+    estado = db_sql.Column(db_sql.String(20), default ='PENDIENTE', nullable=False)
+    referencia = db_sql.Column(db_sql.String(100))
+    fecha_pago = db_sql.Coumn(db_sql.Date)
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
+    #Relaciones
+    proveedor = db_sql.relationship('Proveedor', backref='PagoProveedor', lazy=True)
+    #Constraints
+    __table_args__ = (
+        CheckConstraint("monto > 10", name='chequear_precio_positivo'),
+        CheckConstraint("estado IN ('PENDIENTE', 'PAGADO', 'ANULADO')",name='check_estado_proveedor'),
+    )
+    
+#Modulo Inventario
+
+#Modulo Pedidos y Facturacion
 
 #Modulo Seguridad
 class Usuario(db_sql.Model):
