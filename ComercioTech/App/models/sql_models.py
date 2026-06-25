@@ -53,8 +53,7 @@ class LogAuditoriaSeguridad(db_sql.Model):
     __tablename__ = 'log_auditoria_seguridad'
     #Tablas
     id_log = db_sql.Column(db_sql.Integer, primary_key = True)
-    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
-    id_aprobador = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'))
+    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'),nullable = True)
     evento = db_sql.Column(db_sql.String(100), nullable = False)
     descripcion = db_sql.Column(db_sql.Text)
     ip_origen = db_sql.Column(db_sql.INET)
@@ -62,8 +61,8 @@ class LogAuditoriaSeguridad(db_sql.Model):
     fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     
     #Relaciones
-    usuario_solicitante = db_sql.relationship('Usuario', backref='logs_auditoria', lazy=True)
-    usuario_aprobador = db_sql.relationship('Usuario', backref='logs_auditoria_aprobadas', lazy=True)
+    Usuario = db_sql.relationship('Usuario', backref='logs_seguridad', lazy=True)
+
     
 class SolicitudEliminacion(db_sql.Model):
     __tablename__ = 'solicitud_eliminacion'
@@ -71,7 +70,7 @@ class SolicitudEliminacion(db_sql.Model):
     id_solicitud = db_sql.Column(db_sql.Integer, primary_key = True)
     id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
     tabla_usuario = db_sql.Column(db_sql.String(100), nullable = False)
-    id_aprobador= db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'))
+    id_aprobador= db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'),nullable = True)
     motivo = db_sql.Column(db_sql.Text, nullable = False)
     estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable = False)
     fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
@@ -159,7 +158,7 @@ class Proveedor(db_sql.Model):
     
     
     #Relaciones
-    direccion = db_sql.relationship('Direccion', backref='proveedor', lazy=True)
+    direccion = db_sql.relationship('Direccion', backref='proveedores', lazy=True)
     
     #Constraints
     #No hay
@@ -169,6 +168,7 @@ class PagoProveedor(db_sql.Model):
     __tablename__ = 'pago_proveedor'
     #Columnas
     id_pago = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_proveedor = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('proveedor.id_proveedor'), nullable=False)
     monto = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable = False)
     metodo_pago = db_sql.Column(db_sql.String(50), nullable=False)
     estado = db_sql.Column(db_sql.String(20), default ='PENDIENTE', nullable=False)
@@ -199,7 +199,10 @@ class Producto(db_sql.Model):
 #Relaciones
     proveedor = db_sql.relationship('Proveedor', backref='producto', lazy=True)
 #Constraints
-
+    __table_args__ = (
+        CheckConstraint("precio >= 0", name='check_precio_positivo'),
+        CheckConstraint("stock >= 0", name='check_stock_positivo'),
+    )
 
 #Modulo Pedidos y Facturacion
 class Pedido(db_sql.Model):
@@ -215,8 +218,8 @@ class Pedido(db_sql.Model):
     total = db_sql.Column(db_sql.Numeric(precision=12, scale=2), default=0, nullable=False)
     observaciones = db_sql.Column(db_sql.Text)
 #Relaciones
-    cliente = db_sql.relationship('Cliente', backref='pedido', lazy=True)
-    usuario = db_sql.relationship('Usuario', backref='pedido', lazy=True)  
+    cliente = db_sql.relationship('Cliente', backref='pedidos', lazy=True)
+    usuario = db_sql.relationship('Usuario', backref='pedidos', lazy=True)  
 #Constraints
     __table_args__ = (
         CheckConstraint("estado IN ('PENDIENTE', 'CONFIRMADO', 'ENTREGADO', 'CANCELADO')", name='check_estado_pedido'),
