@@ -150,7 +150,7 @@ CATEGORIAS = {
 
     # ── Mobiliario ───────────────────────────────────────────────────────────
     "escritorios": {
-        "etiqueta": "hogar/oficina",
+        "etiqueta": "hogarOficina",
         "prefijo_sku": "ESC",
         "marcas": ["Flexispot", "Autonomous", "Ergotron", "Ikea", "Brateck", "MotionGrey"],
         "modelos": ["EG8 Standing Desk", "SmartDesk Pro", "LX Desk", "UPPSPEL", "BD-T01", "Standing Desk Pro"],
@@ -168,7 +168,7 @@ CATEGORIAS = {
     },
 
     "sillas_oficina": {
-        "etiqueta": "hogar/oficina",
+        "etiqueta": "hogarOficina",
         "prefijo_sku": "SIL",
         "marcas": ["Herman Miller", "Secretlab", "DXRacer", "Autonomous", "Haworth", "Steelcase"],
         "modelos": ["Aeron", "Titan Evo", "OH/C588", "ErgoChair Pro", "Fern", "Leap V2"],
@@ -187,7 +187,7 @@ CATEGORIAS = {
 
     # ── Redes y conectividad ─────────────────────────────────────────────────
     "routers_y_redes": {
-        "etiqueta": "conectividad/redes",
+        "etiqueta": "conectividadRedes",
         "prefijo_sku": "NET",
         "marcas": ["TP-Link", "Asus", "Netgear", "Ubiquiti", "Mikrotik", "D-Link"],
         "modelos": ["Archer AX90", "RT-AX88U", "Orbi RBK863S", "UniFi Dream Machine", "hEX S", "DIR-X5460"],
@@ -204,7 +204,7 @@ CATEGORIAS = {
     },
 
     "switches_red": {
-        "etiqueta": "conectividad/redes",
+        "etiqueta": "conectividadRedes",
         "prefijo_sku": "SWT",
         "marcas": ["TP-Link", "Cisco", "Netgear", "Ubiquiti", "D-Link"],
         "modelos": ["TL-SG108E", "Catalyst 1000", "GS308E", "USW-Lite-8-PoE", "DGS-1210-10P"],
@@ -384,7 +384,7 @@ def generar_variantes(sku_base, categoria):
     ]
 
 
-def generar_producto(indice):
+def generar_producto(indice, activo=False):
     categoria = random.choice(list(CATEGORIAS.keys()))
     cfg = CATEGORIAS[categoria]
 
@@ -398,6 +398,8 @@ def generar_producto(indice):
     fecha_creacion      = fake.date_time_between(start_date="-2y", end_date="-6M", tzinfo=timezone.utc)
     fecha_actualizacion = fake.date_time_between(start_date=fecha_creacion, end_date="now", tzinfo=timezone.utc)
 
+    atributos_generados = cfg["atributos"]()  # <-- se llama UNA sola vez (ver nota abajo)
+
     return {
         "_id": ObjectId(),
         "sku": sku,
@@ -409,12 +411,12 @@ def generar_producto(indice):
         "precio_actual": random.choice(range(3990, 5000001, 1000)),
         "moneda": "CLP",
         "stock_disponible": stock_total,
-        "activo": fake.boolean(chance_of_getting_true=85),
-        "atributos": cfg["atributos"](),
+        "activo": activo,  
+        "atributos": atributos_generados,
         "variantes": variantes,
         "especificaciones_fabricante": {
             "garantia_meses": random.choice([3, 6, 12, 24, 36]),
-            "peso_kg": cfg["atributos"]().get("peso_kg") or round(random.uniform(0.1, 5.0), 1),
+            "peso_kg": atributos_generados.get("peso_kg") or round(random.uniform(0.1, 5.0), 1),
             "fabricante": marca,
         },
         "rating_promedio": round(random.uniform(1.0, 5.0), 1),
@@ -423,27 +425,46 @@ def generar_producto(indice):
         "fecha_actualizacion": fecha_actualizacion,
     }
 
-
 # ─── Inserción ───────────────────────────────────────────────────────────────
 
-def seed(n=300):
+def seed(n=1_200_000, n_activos=250, tamano_lote=5000):
     client = MongoClient("mongodb://localhost:27017/")
     col = client["comerciotech"]["productos"]
     col.drop()
 
-    docs = [generar_producto(i + 1) for i in range(n)]
-    col.insert_many(docs)
-    print(f"✅ {len(docs)} productos insertados en 'tienda.productos'")
+    # Elegimos al azar (sin reemplazo) qué 250 índices del total serán los activos
+    indices_activos = set(random.sample(range(1, n + 1), n_activos))
 
-    # Índices útiles
+    total_insertados = 0
+    lote = []
+
+    for i in range(1, n + 1):
+        es_activo = i in indices_activos
+        lote.append(generar_producto(i, activo=es_activo))
+
+        if len(lote) >= tamano_lote:
+            col.insert_many(lote, ordered=False)
+            total_insertados += len(lote)
+            print(f"  → {total_insertados:,} / {n:,} insertados...")
+            lote = []
+
+    if lote:  # insertar lo que quede en el último lote incompleto
+        col.insert_many(lote, ordered=False)
+        total_insertados += len(lote)
+
+    print(f"  {total_insertados:,} productos insertados en 'comerciotech.productos'")
+    print(f"  Activos: {col.count_documents({'activo': True}):,}")
+    print(f"  Inactivos: {col.count_documents({'activo': False}):,}")
+
+    # Índices útiles (se crean al final, después de insertar todo: es más rápido)
     col.create_index("sku",       unique=True)
     col.create_index("categoria")
     col.create_index("etiqueta")
     col.create_index("activo")
-    print("📦 Índices creados: sku, categoria, etiqueta, activo")
+    print("Índices creados: sku, categoria, etiqueta, activo")
 
     client.close()
 
 
 if __name__ == "__main__":
-    seed(n=200)
+    seed(n=1_200_000, n_activos=250)
