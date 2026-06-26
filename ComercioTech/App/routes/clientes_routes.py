@@ -9,24 +9,23 @@ from datetime import datetime
 
 #Blueprints!
 #Primero Creamos el BP clientes
-clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
+clientes_bp = Blueprint('clientes', __name__)
 
 #Luego le aplicamos su Getter a los clientes
 @clientes_bp.route('/', methods=['GET'])
 def obtener_clientes():
     try:
-        clientes = Cliente.query.filter_by(activo=True).all
+        clientes = Cliente.query.filter_by(activo=True).all()
         #en SQL sería SELECT * FROM cliente WHERE activo = True;
         resultado = []
         for cliente in clientes:
             resultado.append({
                 'id_cliente': cliente.id_cliente,
                 'nombre': cliente.nombre,
-                'apellido': cliente.apellid,
                 'email': cliente.email,
                 'telefono': cliente.telefono,
                 'rut': cliente.rut,
-                'fecha_registro': cliente.fecha_registro.strftime('%Y-%m-%d $H:%M:%S')
+                'fecha_registro': cliente.fecha_registro.strftime('%Y-%m-%d %H:%M:%S')
             })
         return jsonify({
             'exito': True,
@@ -59,7 +58,8 @@ def obtener_cliente(id_cliente):
             direcciones.append({
                 'id_direccion': direccion.id_direccion,
                 'calle': direccion.calle,
-                'numero': direccion.numero,
+                'comuna': direccion.comuna,
+                'codigo_postal': direccion.codigo_postal,
                 'ciudad': direccion.ciudad,
                 'region': direccion.region,
                 'tipo': direccion.tipo
@@ -69,7 +69,6 @@ def obtener_cliente(id_cliente):
             'cliente': {
                 'id_cliente': cliente.id_cliente,
                 'nombre': cliente.nombre,
-                'apellido': cliente.apellido,
                 'email': cliente.email,
                 'telefono': cliente.telefono,
                 'rut': cliente.rut,
@@ -99,7 +98,7 @@ def crear_cliente():
                 
         nuevo_cliente = Cliente(
             nombre = datos['nombre'],
-            email = ['email'],
+            email = datos['email'],
             telefono = datos.get('telefono'),
             rut = datos['rut'],
             fecha_registro = datetime.utcnow()
@@ -183,7 +182,7 @@ def eliminar_cliente(id_cliente):
                 'mensaje': f'Cliente con ID {id_cliente} no encontrado'
             }), 404
             
-            db_sql.session.delete(cliente)
+        db_sql.session.delete(cliente)
         db_sql.session.commit()
         
         return jsonify({
