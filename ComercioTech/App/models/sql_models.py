@@ -1,6 +1,7 @@
 from app.config.database_config import db_sql
 from sqlalchemy import CheckConstraint
 # La idea es permitir definir tablas y hacer consultas
+from sqlalchemy.dialects.postgresql import JSONB, INET
 from datetime import datetime
 #Este es para poner la fecha de registro automáticamente
 #Modulo Seguridad
@@ -10,7 +11,7 @@ class Rol(db_sql.Model):
     id_rol = db_sql.Column(db_sql.Integer, primary_key = True)
     nombre = db_sql.Column(db_sql.String(50), nullable = False, unique=True)
     descripcion = db_sql.Column(db_sql.String(200))
-    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    activo = db_sql.Column(db_sql.Boolean, default = True, nullable = False)
     fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)   
     
 class Usuario(db_sql.Model):
@@ -22,7 +23,7 @@ class Usuario(db_sql.Model):
     apellido = db_sql.Column(db_sql.String(100), nullable = False)
     email = db_sql.Column(db_sql.String(150), nullable = False, unique=True)
     contrasena_hash = db_sql.Column(db_sql.String(255), nullable = False)
-    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    activo = db_sql.Column(db_sql.Boolean, default = True, nullable = False)
     fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     ultimo_login = db_sql.Column(db_sql.DateTime)
     
@@ -36,9 +37,9 @@ class Auditoria(db_sql.Model):
     id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
     tabla_afectada = db_sql.Column(db_sql.String(100), nullable = False)
     operacion = db_sql.Column(db_sql.String(10), nullable = False)
-    datos_anteriores = db_sql.Column(db_sql.JSONB)
-    datos_nuevos = db_sql.Column(db_sql.JSONB)
-    ip_origen = db_sql.Column(db_sql.INET)
+    datos_anteriores = db_sql.Column(JSONB)
+    datos_nuevos = db_sql.Column(JSONB)
+    ip_origen = db_sql.Column(INET)
     fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     
     #Relaciones
@@ -56,7 +57,7 @@ class LogAuditoriaSeguridad(db_sql.Model):
     id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'),nullable = True)
     evento = db_sql.Column(db_sql.String(100), nullable = False)
     descripcion = db_sql.Column(db_sql.Text)
-    ip_origen = db_sql.Column(db_sql.INET)
+    ip_origen = db_sql.Column(INET)
     exitoso = db_sql.Column(db_sql.Boolean, default = False, nullable = False)
     fecha_accion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
     
@@ -104,7 +105,7 @@ class Cliente(db_sql.Model):
     email = db_sql.Column(db_sql.String(150), nullable=False, unique=True)
     telefono = db_sql.Column(db_sql.String(20))
     rut = db_sql.Column(db_sql.String(12), nullable=False, unique=True)
-    activo = db_sql.Column(db_sql.Bool, default = True, nullable = False)
+    activo = db_sql.Column(db_sql.Boolean, default = True, nullable = False)
     fecha_registro = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
     
     # RELACIONES sin crear tablas, solo crean relaciones lógicas
@@ -153,7 +154,7 @@ class Proveedor(db_sql.Model):
     rut = db_sql.Column(db_sql.String(20), unique=True)
     email = db_sql.Column(db_sql.String(150))
     telefono = db_sql.Column(db_sql.String(150))
-    activo = db_sql.Column(db_sql.Bool, default = True, nullable=False)
+    activo = db_sql.Column(db_sql.Boolean, default = True, nullable=False)
     fecha_registro = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
     
     
@@ -194,7 +195,7 @@ class Producto(db_sql.Model):
     descripcion = db_sql.Column(db_sql.Text)
     precio = db_sql.Column(db_sql.Numeric(precision=12, scale=2), nullable=False)
     stock = db_sql.Column(db_sql.Integer, default=0)
-    activo = db_sql.Column(db_sql.Bool, default=True, nullable=False)
+    activo = db_sql.Column(db_sql.Boolean, default=True, nullable=False)
     fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable=False)
 #Relaciones
     proveedor = db_sql.relationship('Proveedor', backref='producto', lazy=True)
