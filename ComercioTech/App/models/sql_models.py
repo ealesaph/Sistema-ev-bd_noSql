@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import JSONB, INET
 from datetime import datetime
 #Este es para poner la fecha de registro automáticamente
 #Modulo Seguridad
+
 class Rol(db_sql.Model):
     __tablename__ = 'rol'
     #Tablas
@@ -67,24 +68,15 @@ class LogAuditoriaSeguridad(db_sql.Model):
     
 class SolicitudEliminacion(db_sql.Model):
     __tablename__ = 'solicitud_eliminacion'
-    #Tablas
-    id_solicitud = db_sql.Column(db_sql.Integer, primary_key = True)
-    id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'), nullable = False)
-    tabla_usuario = db_sql.Column(db_sql.String(100), nullable = False)
-    id_aprobador= db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'),nullable = True)
-    motivo = db_sql.Column(db_sql.Text, nullable = False)
-    estado = db_sql.Column(db_sql.String(20), default='PENDIENTE', nullable = False)
-    fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, nullable = False)
-    fecha_resolucion = db_sql.Column(db_sql.DateTime)
     
-    #Relaciones
-    usuario_solicitante = db_sql.relationship('Usuario', backref='solicitudes_eliminacion', lazy=True)
-    usuario_aprobador = db_sql.relationship('Usuario', backref='solicitudes_eliminacion_aprobadas', lazy=True)
-
-    #Constraints
-    __table_args__ = (
-        CheckConstraint("estado IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')", name='check_estado_solicitud'),
-    )
+    id_solicitud = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
+    fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
+    estado = db_sql.Column(db_sql.String(20), default='pendiente')  # pendiente, aprobada, completada
+    fecha_procesamiento = db_sql.Column(db_sql.DateTime)
+    token_verificacion = db_sql.Column(db_sql.String(255), nullable=False, unique=True)
+    
+    cliente = db_sql.relationship('Cliente', backref='solicitudes_eliminacion')
 
 
 
@@ -131,6 +123,7 @@ class Direccion(db_sql.Model):
     id_proveedor = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('proveedor.id_proveedor'), nullable = True)
     calle = db_sql.Column(db_sql.String(200), nullable = False)
     numero = db_sql.Column(db_sql.String(20))
+    comuna = db_sql.Column(db_sql.String(100), nullable=False)
     ciudad = db_sql.Column(db_sql.String(100), nullable = False)
     region = db_sql.Column(db_sql.String(100))
     pais = db_sql.Column(db_sql.String(100), server_default = 'Chile', nullable = False)
@@ -274,14 +267,3 @@ class Factura(db_sql.Model):
         CheckConstraint("estado IN ('EMITIDA', 'PAGADA', 'ANULADA')", name='check_estado_factura')
     )
     
-class SolicitudEliminacion(db_sql.Model):
-    __tablename__ = 'solicitud_eliminacion'
-    
-    id_solicitud = db_sql.Column(db_sql.Integer, primary_key=True)
-    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
-    fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
-    estado = db_sql.Column(db_sql.String(20), default='pendiente')  # pendiente, aprobada, completada
-    fecha_procesamiento = db_sql.Column(db_sql.DateTime)
-    token_verificacion = db_sql.Column(db_sql.String(255), nullable=False, unique=True)
-    
-    cliente = db_sql.relationship('Cliente', backref='solicitudes_eliminacion')

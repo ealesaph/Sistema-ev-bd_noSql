@@ -1,17 +1,16 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
-from app.middleware.auth_middleware import token_requerido, rol_requerido
+from app.middleware.auth_middleware import token_requerido
 
 auth_bp = Blueprint('auth', __name__)
 
 # URL: /api/auth/register
 @auth_bp.route('/register', methods=['POST'])
 def registrar_usuario():
-
     try:
         datos = request.get_json()
         
-        campos_requeridos = ['nombre_usuario', 'contraseña', 'id_rol']
+        campos_requeridos = ['email', 'contraseña', 'nombre', 'apellido', 'id_rol']
         for campo in campos_requeridos:
             if campo not in datos:
                 return jsonify({
@@ -20,10 +19,11 @@ def registrar_usuario():
                 }), 400
         
         resultado = AuthService.registrar_usuario(
-            nombre_usuario=datos['nombre_usuario'],
+            email=datos['email'],
             contraseña=datos['contraseña'],
-            id_rol=datos['id_rol'],
-            id_cliente=datos.get('id_cliente')
+            nombre=datos['nombre'],
+            apellido=datos['apellido'],
+            id_rol=datos['id_rol']
         )
         
         if resultado['exito']:
@@ -40,18 +40,17 @@ def registrar_usuario():
 # URL: /api/auth/login
 @auth_bp.route('/login', methods=['POST'])
 def login_usuario():
-
     try:
         datos = request.get_json()
         
-        if 'nombre_usuario' not in datos or 'contraseña' not in datos:
+        if 'email' not in datos or 'contraseña' not in datos:
             return jsonify({
                 'exito': False,
-                'mensaje': 'Se requiere nombre_usuario y contraseña'
+                'mensaje': 'Se requiere email y contraseña'
             }), 400
         
         resultado = AuthService.login_usuario(
-            nombre_usuario=datos['nombre_usuario'],
+            email=datos['email'],
             contraseña=datos['contraseña']
         )
         
@@ -70,7 +69,6 @@ def login_usuario():
 @auth_bp.route('/verify', methods=['GET'])
 @token_requerido
 def verificar_token():
-
     payload = request.usuario_payload
     return jsonify({
         'exito': True,
@@ -83,7 +81,6 @@ def verificar_token():
 @auth_bp.route('/me', methods=['GET'])
 @token_requerido
 def obtener_info_usuario():
-
     try:
         from app.config.database_config import db_sql
         from app.models.sql_models import Usuario
@@ -101,11 +98,11 @@ def obtener_info_usuario():
             'exito': True,
             'usuario': {
                 'id_usuario': usuario.id_usuario,
-                'nombre_usuario': usuario.nombre_usuario,
-                'rol': usuario.rol.nombre_rol,
-                'nivel_permiso': usuario.rol.nivel_permiso,
-                'estado': usuario.estado,
-                'id_cliente': usuario.id_cliente
+                'email': usuario.email,
+                'nombre': usuario.nombre,
+                'apellido': usuario.apellido,
+                'rol': usuario.rol.nombre,
+                'activo': usuario.activo
             }
         }), 200
         

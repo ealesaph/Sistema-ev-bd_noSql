@@ -33,22 +33,19 @@ def obtener_pedidos():
             'exito': False,
             'mensaje': f'Error al obtener pedidos: {str(e)}'
         }), 500
-        
+
 @pedidos_bp.route('/', methods=['POST'])
 # URL: /api/pedidos
 def crear_pedido():
-    
     try:
         datos = request.get_json()
         
-        # 🧠 Valido campos obligatorios
         if 'id_cliente' not in datos or 'productos' not in datos:
             return jsonify({
                 'exito': False,
                 'mensaje': 'Se requiere id_cliente y lista de productos'
             }), 400
         
-        # 🧠 Verifico que el cliente existe
         cliente = Cliente.query.get(datos['id_cliente'])
         if not cliente:
             return jsonify({
@@ -59,8 +56,8 @@ def crear_pedido():
         nuevo_pedido = Pedido(
             id_cliente=datos['id_cliente'],
             fecha_pedido=datetime.utcnow(),
-            estado='pendiente',
-            total=0  # Se calculará después
+            estado='PENDIENTE',
+            total=0
         )
         db_sql.session.add(nuevo_pedido)
         db_sql.session.flush()
@@ -72,24 +69,22 @@ def crear_pedido():
             if not producto:
                 raise Exception(f'Producto con ID {item["id_producto"]} no encontrado')
             
-            if producto.stock_actual < item['cantidad']:
-                raise Exception(f'Stock insuficiente para {producto.nombre}. Disponible: {producto.stock_actual}')
+            if producto.stock < item['cantidad']:
+                raise Exception(f'Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}')
             
             detalle = DetallePedido(
                 id_pedido=nuevo_pedido.id_pedido,
                 id_producto=item['id_producto'],
                 cantidad=item['cantidad'],
-                precio_unitario=float(producto.precio_base)
+                precio_unitario=float(producto.precio)
             )
             
             db_sql.session.add(detalle)
+            producto.stock -= item['cantidad']
             
-            producto.stock_actual -= item['cantidad']
-            
-            total_pedido += item['cantidad'] * float(producto.precio_base)
-            
-        nuevo_pedido.total = total_pedido
+            total_pedido += item['cantidad'] * float(producto.precio)
         
+        nuevo_pedido.total = total_pedido
         db_sql.session.commit()
         
         return jsonify({

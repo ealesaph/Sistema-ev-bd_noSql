@@ -17,16 +17,20 @@ class AuthService:
     
     @staticmethod
     def verificar_password(contraseña_plana, hash_almacenado):
-
+        """
+        Verifica si una contraseña coincide con su hash
+        """
         return bcrypt.checkpw(contraseña_plana.encode('utf-8'), hash_almacenado.encode('utf-8'))
     
     @staticmethod
     def generar_token(usuario_id, rol_id):
-
+        """
+        Genera un JWT para un usuario autenticado
+        """
         payload = {
             'usuario_id': usuario_id,
             'rol_id': rol_id,
-            'exp': datetime.utcnow() + timedelta(hours=24),  # Token expira en 24 horas
+            'exp': datetime.utcnow() + timedelta(hours=24),
             'iat': datetime.utcnow()
         }
         secret = current_app.config.get('SECRET_KEY', 'clave_secreta_por_defecto')
@@ -34,7 +38,9 @@ class AuthService:
     
     @staticmethod
     def verificar_token(token):
-
+        """
+        Verifica y decodifica un JWT
+        """
         try:
             secret = current_app.config.get('SECRET_KEY', 'clave_secreta_por_defecto')
             payload = jwt.decode(token, secret, algorithms=['HS256'])
@@ -45,13 +51,21 @@ class AuthService:
             return {'exito': False, 'mensaje': 'Token inválido'}
     
     @staticmethod
-    def registrar_usuario(nombre_usuario, contraseña, id_rol, id_cliente=None):
-
+    def registrar_usuario(email, contraseña, nombre, apellido, id_rol):
+        """
+        Registra un nuevo usuario en el sistema
+        Usa los campos reales del modelo Usuario:
+        - email (único, usado para login)
+        - nombre
+        - apellido
+        - contrasena_hash
+        - activo (default True)
+        """
         try:
-            # Verificar si el nombre de usuario ya existe
-            usuario_existente = Usuario.query.filter_by(nombre_usuario=nombre_usuario).first()
+            # Verificar si el email ya existe
+            usuario_existente = Usuario.query.filter_by(email=email).first()
             if usuario_existente:
-                return {'exito': False, 'mensaje': 'El nombre de usuario ya está en uso'}
+                return {'exito': False, 'mensaje': 'El email ya está registrado'}
             
             # Verificar que el rol existe
             rol = Rol.query.get(id_rol)
@@ -60,11 +74,12 @@ class AuthService:
             
             # Crear el nuevo usuario
             nuevo_usuario = Usuario(
-                nombre_usuario=nombre_usuario,
-                hash_password=AuthService.hash_password(contraseña),
+                email=email,
+                contrasena_hash=AuthService.hash_password(contraseña),
+                nombre=nombre,
+                apellido=apellido,
                 id_rol=id_rol,
-                id_cliente=id_cliente,
-                estado='activo'
+                activo=True
             )
             
             db_sql.session.add(nuevo_usuario)
@@ -81,21 +96,23 @@ class AuthService:
             return {'exito': False, 'mensaje': f'Error al registrar usuario: {str(e)}'}
     
     @staticmethod
-    def login_usuario(nombre_usuario, contraseña):
-
+    def login_usuario(email, contraseña):
+        """
+        Autentica a un usuario por email y genera un token JWT
+        """
         try:
-            # Buscar el usuario
-            usuario = Usuario.query.filter_by(nombre_usuario=nombre_usuario).first()
+            # Buscar el usuario por email
+            usuario = Usuario.query.filter_by(email=email).first()
             if not usuario:
-                return {'exito': False, 'mensaje': 'Usuario o contraseña incorrectos'}
+                return {'exito': False, 'mensaje': 'Email o contraseña incorrectos'}
             
             # Verificar la contraseña
-            if not AuthService.verificar_password(contraseña, usuario.hash_password):
-                return {'exito': False, 'mensaje': 'Usuario o contraseña incorrectos'}
+            if not AuthService.verificar_password(contraseña, usuario.contrasena_hash):
+                return {'exito': False, 'mensaje': 'Email o contraseña incorrectos'}
             
             # Verificar que el usuario esté activo
-            if usuario.estado != 'activo':
-                return {'exito': False, 'mensaje': f'La cuenta está {usuario.estado}'}
+            if not usuario.activo:
+                return {'exito': False, 'mensaje': 'La cuenta está desactivada'}
             
             # Generar token
             token = AuthService.generar_token(usuario.id_usuario, usuario.id_rol)
@@ -109,10 +126,11 @@ class AuthService:
                 'token': token,
                 'usuario': {
                     'id_usuario': usuario.id_usuario,
-                    'nombre_usuario': usuario.nombre_usuario,
-                    'rol': rol.nombre_rol,
-                    'nivel_permiso': rol.nivel_permiso,
-                    'id_cliente': usuario.id_cliente
+                    'email': usuario.email,
+                    'nombre': usuario.nombre,
+                    'apellido': usuario.apellido,
+                    'rol': rol.nombre,
+                    'activo': usuario.activo
                 }
             }
             

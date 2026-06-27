@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 #jsonify = Convierte diccionarios de Python a JSON para la respuesta HTTP
 from app.config.database_config import db_sql
 #la idea es que el objeto maneje la conexión al Postre, con esto hacemos consultas
-from app.models.sql_models import Cliente,Direccion
+from app.models.sql_models import Cliente, Direccion, SolicitudEliminacion, Auditoria
 from datetime import datetime
 from app.models.sql_models import SolicitudEliminacion
 import secrets
@@ -91,7 +91,7 @@ def obtener_cliente(id_cliente):
 def crear_cliente():
     try:
         datos = request.get_json()
-        campos_requeridos = ['nombre', 'email', 'rut']
+        campos_requeridos = ['nombre', 'apellido', 'email', 'rut']
         for campo in campos_requeridos:
             if campo not in datos:
                 return jsonify({
@@ -101,6 +101,7 @@ def crear_cliente():
                 
         nuevo_cliente = Cliente(
             nombre = datos['nombre'],
+            apellido = datos['apellido'],
             email = datos['email'],
             telefono = datos.get('telefono'),
             rut = datos['rut'],
@@ -254,7 +255,7 @@ def solicitar_eliminacion(id_cliente):
 # URL: /api/clientes/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>
 @clientes_bp.route('/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>', methods=['POST'])
 @token_requerido
-@rol_requerido(5)  # Solo administradores/financieros
+@rol_requerido(['admin', 'financiero'])  # Solo administradores/financieros
 def aprobar_eliminacion(id_cliente, id_solicitud):
 
     try:
