@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.config.database_config import db_sql
-from app.models.sql_models import Pedido, DetallePedido, Cliente, Producto
+from App.config.database_config import db_sql
+from App.models.sql_models import Pedido, DetallePedido, Cliente, Producto
 from datetime import datetime
 
 pedidos_bp = Blueprint('pedidos', __name__)
@@ -59,7 +59,7 @@ def crear_pedido():
         nuevo_pedido = Pedido(
             id_cliente=datos['id_cliente'],
             fecha_pedido=datetime.utcnow(),
-            estado='pendiente',
+            estado='PENDIENTE',
             total=0  # Se calculará después
         )
         db_sql.session.add(nuevo_pedido)
@@ -72,21 +72,21 @@ def crear_pedido():
             if not producto:
                 raise Exception(f'Producto con ID {item["id_producto"]} no encontrado')
             
-            if producto.stock_actual < item['cantidad']:
-                raise Exception(f'Stock insuficiente para {producto.nombre}. Disponible: {producto.stock_actual}')
+            if producto.stock < item['cantidad']:
+                raise Exception(f'Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}')
             
             detalle = DetallePedido(
                 id_pedido=nuevo_pedido.id_pedido,
                 id_producto=item['id_producto'],
                 cantidad=item['cantidad'],
-                precio_unitario=float(producto.precio_base)
+                precio_unitario=float(producto.precio)
             )
             
             db_sql.session.add(detalle)
             
-            producto.stock_actual -= item['cantidad']
+            producto.stock -= item['cantidad']
             
-            total_pedido += item['cantidad'] * float(producto.precio_base)
+            total_pedido += item['cantidad'] * float(producto.precio)
             
         nuevo_pedido.total = total_pedido
         

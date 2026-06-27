@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.config.database_config import db_mongo
+from App.config.database_config import db_mongo
 from bson import ObjectId
 from datetime import datetime
 

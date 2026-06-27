@@ -2,9 +2,9 @@ from flask import Blueprint, jsonify, request
 #Blueprint = Modulo de rutas que utilizaremos en la APP principal
 #Request = Permite acceder a los datos enviados por el cliente
 #jsonify = Convierte diccionarios de Python a JSON para la respuesta HTTP
-from app.config.database_config import db_sql
+from App.config.database_config import db_sql
 #la idea es que el objeto maneje la conexión al Postre, con esto hacemos consultas
-from app.models.sql_models import Cliente,Direccion
+from App.models.sql_models import Cliente,Direccion
 from datetime import datetime
 
 #Blueprints!
@@ -58,7 +58,7 @@ def obtener_cliente(id_cliente):
             direcciones.append({
                 'id_direccion': direccion.id_direccion,
                 'calle': direccion.calle,
-                'comuna': direccion.comuna,
+                'numero': direccion.numero,
                 'codigo_postal': direccion.codigo_postal,
                 'ciudad': direccion.ciudad,
                 'region': direccion.region,
@@ -88,7 +88,7 @@ def obtener_cliente(id_cliente):
 def crear_cliente():
     try:
         datos = request.get_json()
-        campos_requeridos = ['nombre', 'email', 'rut']
+        campos_requeridos = ['nombre', 'apellido', 'email', 'rut']
         for campo in campos_requeridos:
             if campo not in datos:
                 return jsonify({
@@ -98,6 +98,7 @@ def crear_cliente():
                 
         nuevo_cliente = Cliente(
             nombre = datos['nombre'],
+            apellido = datos['apellido'],
             email = datos['email'],
             telefono = datos.get('telefono'),
             rut = datos['rut'],
@@ -105,17 +106,18 @@ def crear_cliente():
         )
         
         db_sql.session.add(nuevo_cliente)
+        db_sql.session.flush()  # Para obtener nuevo_cliente.id_cliente antes del commit
         
         if 'direcciones' in datos and datos['direcciones']:
             for dir_data in datos['direcciones']:
                 nueva_direccion = Direccion(
                     id_cliente = nuevo_cliente.id_cliente,
                     calle=dir_data['calle'],
+                    numero=dir_data.get('numero'),
                     ciudad=dir_data['ciudad'],
-                    comuna=dir_data['comuna'],
                     region=dir_data.get('region'),
                     codigo_postal=dir_data.get('codigo_postal'),
-                    tipo=dir_data['tipo']
+                    tipo=dir_data.get('tipo', 'ENVIO')
                 )
                 db_sql.session.add(nueva_direccion)
         

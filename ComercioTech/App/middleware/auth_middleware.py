@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, jsonify
-from app.services.auth_service import AuthService
+from App.services.auth_service import AuthService
 
 def token_requerido(f):
 
@@ -40,59 +40,63 @@ def token_requerido(f):
     
     return decorated_function
 
-def rol_requerido(nivel_minimo):
+def rol_requerido(roles_permitidos):
+    """
+    NOTA: el modelo Rol real (sql_models.py) no tiene columna 'nivel_permiso',
+    así que el control de acceso se hace por nombre de rol.
+    Uso: @rol_requerido(['admin', 'vendedor'])
+    """
+    if isinstance(roles_permitidos, str):
+        roles_permitidos = [roles_permitidos]
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Primero verificar que el token es válido
             auth_header = request.headers.get('Authorization')
-            
+
             if not auth_header:
                 return jsonify({
                     'exito': False,
                     'mensaje': 'Token de autenticación requerido'
                 }), 401
-            
+
             parts = auth_header.split()
             if len(parts) != 2 or parts[0].lower() != 'bearer':
                 return jsonify({
                     'exito': False,
                     'mensaje': 'Formato de token inválido'
                 }), 401
-            
+
             token = parts[1]
             resultado = AuthService.verificar_token(token)
-            
+
             if not resultado['exito']:
                 return jsonify({
                     'exito': False,
                     'mensaje': resultado['mensaje']
                 }), 401
-            
+
             payload = resultado['payload']
-            
-            # Verificar el nivel de rol
-            # Nota: Necesitas obtener el nivel_permiso del rol desde la BD
-            from app.config.database_config import db_sql
-            from app.models.sql_models import Rol
-            
+
+            from App.models.sql_models import Rol
+
             rol = Rol.query.get(payload['rol_id'])
             if not rol:
                 return jsonify({
                     'exito': False,
                     'mensaje': 'Rol no encontrado'
                 }), 403
-            
-            if rol.nivel_permiso < nivel_minimo:
+
+            if rol.nombre not in roles_permitidos:
                 return jsonify({
                     'exito': False,
-                    'mensaje': f'Permisos insuficientes. Se requiere nivel {nivel_minimo}'
+                    'mensaje': f'Permisos insuficientes. Se requiere uno de estos roles: {roles_permitidos}'
                 }), 403
-            
+
             request.usuario_payload = payload
-            
+
             return f(*args, **kwargs)
-        
+
         return decorated_function
     return decorator
