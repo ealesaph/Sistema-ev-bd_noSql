@@ -19,13 +19,16 @@ def create_app():
     from .routes.productos_routes import productos_bp
     from .routes.carrito_routes import carrito_bp
     
+    
     # Registrar nuevas rutas de autenticación
     from .routes.auth_routes import auth_bp
+    from .routes.logs_routes import logs_bp
     
     app.register_blueprint(clientes_bp, url_prefix='/api/clientes')
     app.register_blueprint(pedidos_bp, url_prefix='/api/pedidos')
     app.register_blueprint(productos_bp, url_prefix='/api/productos')
     app.register_blueprint(carrito_bp, url_prefix='/api/carrito')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(logs_bp, url_prefix='/api/logs')
     
     return app

@@ -6,6 +6,9 @@ from app.config.database_config import db_sql
 #la idea es que el objeto maneje la conexión al Postre, con esto hacemos consultas
 from app.models.sql_models import Cliente,Direccion
 from datetime import datetime
+from app.models.sql_models import SolicitudEliminacion
+import secrets
+from app.middleware.auth_middleware import token_requerido, rol_requerido
 
 #Blueprints!
 #Primero Creamos el BP clientes
@@ -196,3 +199,129 @@ def eliminar_cliente(id_cliente):
             'exito': False,
             'mensaje': f'Error al eliminar cliente: {str(e)}'
         }), 500 # 500 = Error del servidor
+        
+# URL: /api/clientes/<int:id_cliente>/solicitar-eliminacion
+@clientes_bp.route('/<int:id_cliente>/solicitar-eliminacion', methods=['POST'])
+def solicitar_eliminacion(id_cliente):
+    """
+    Paso 1: Cliente solicita eliminación de datos personales
+    """
+    try:
+        cliente = Cliente.query.get(id_cliente)
+        if not cliente:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'Cliente no encontrado'
+            }), 404
+        
+        # Verificar si ya hay una solicitud pendiente
+        solicitud_existente = SolicitudEliminacion.query.filter_by(
+            id_cliente=id_cliente,
+            estado='pendiente'
+        ).first()
+        
+        if solicitud_existente:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'Ya existe una solicitud pendiente para este cliente'
+            }), 400
+        
+        # Crear la solicitud
+        token_verificacion = secrets.token_urlsafe(32)
+        nueva_solicitud = SolicitudEliminacion(
+            id_cliente=id_cliente,
+            estado='pendiente',
+            token_verificacion=token_verificacion
+        )
+        
+        db_sql.session.add(nueva_solicitud)
+        db_sql.session.commit()
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Solicitud de eliminación creada exitosamente',
+            'token': token_verificacion,  # En producción se envía por email
+            'id_solicitud': nueva_solicitud.id_solicitud
+        }), 201
+        
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al crear solicitud: {str(e)}'
+        }), 500
+
+# URL: /api/clientes/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>
+@clientes_bp.route('/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>', methods=['POST'])
+@token_requerido
+@rol_requerido(5)  # Solo administradores/financieros
+def aprobar_eliminacion(id_cliente, id_solicitud):
+
+    try:
+        # Obtener la solicitud
+        solicitud = SolicitudEliminacion.query.get(id_solicitud)
+        
+        if not solicitud:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'Solicitud no encontrada'
+            }), 404
+        
+        if solicitud.id_cliente != id_cliente:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'La solicitud no corresponde al cliente'
+            }), 400
+        
+        if solicitud.estado != 'pendiente':
+            return jsonify({
+                'exito': False,
+                'mensaje': f'La solicitud ya fue {solicitud.estado}'
+            }), 400
+        
+        # Verificar token de verificación (en producción, esto se hace por email)
+        datos = request.get_json()
+        if not datos or datos.get('token') != solicitud.token_verificacion:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'Token de verificación inválido'
+            }), 401
+        
+        # Paso 3: Anonimizar los datos del cliente
+        cliente = Cliente.query.get(id_cliente)
+        cliente.nombre = f'ELIMINADO_{cliente.id_cliente}'
+        cliente.apellido = 'USUARIO_ELIMINADO'
+        cliente.email = f'anon_{cliente.id_cliente}@eliminado.com'
+        cliente.telefono = None
+        cliente.rut = f'00.000.000-{cliente.id_cliente:02d}'  # RUT no válido
+        cliente.activo = False
+        
+        # Actualizar la solicitud
+        solicitud.estado = 'completada'
+        solicitud.fecha_procesamiento = datetime.utcnow()
+        
+        # Registrar en auditoría
+        from app.models.sql_models import Auditoria
+        auditoria = Auditoria(
+            id_usuario=request.usuario_payload['usuario_id'],
+            tabla_afectada='cliente',
+            registro_id=cliente.id_cliente,
+            accion='DELETE',
+            detalle={'motivo': 'Derecho al olvido', 'solicitud_id': id_solicitud}
+        )
+        db_sql.session.add(auditoria)
+        
+        db_sql.session.commit()
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Datos del cliente anonimizados exitosamente',
+            'id_cliente': cliente.id_cliente
+        }), 200
+        
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al procesar eliminación: {str(e)}'
+        }), 500

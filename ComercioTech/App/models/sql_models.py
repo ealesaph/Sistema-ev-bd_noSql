@@ -273,3 +273,15 @@ class Factura(db_sql.Model):
         CheckConstraint("monto_total >= 0", name='check_monto_total_factura_positivo'),
         CheckConstraint("estado IN ('EMITIDA', 'PAGADA', 'ANULADA')", name='check_estado_factura')
     )
+    
+class SolicitudEliminacion(db_sql.Model):
+    __tablename__ = 'solicitud_eliminacion'
+    
+    id_solicitud = db_sql.Column(db_sql.Integer, primary_key=True)
+    id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
+    fecha_solicitud = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
+    estado = db_sql.Column(db_sql.String(20), default='pendiente')  # pendiente, aprobada, completada
+    fecha_procesamiento = db_sql.Column(db_sql.DateTime)
+    token_verificacion = db_sql.Column(db_sql.String(255), nullable=False, unique=True)
+    
+    cliente = db_sql.relationship('Cliente', backref='solicitudes_eliminacion')
