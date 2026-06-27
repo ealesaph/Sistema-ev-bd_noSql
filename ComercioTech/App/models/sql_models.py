@@ -1,4 +1,4 @@
-from App.config.database_config import db_sql
+from app.config.database_config import db_sql
 from sqlalchemy import CheckConstraint
 # La idea es permitir definir tablas y hacer consultas
 from sqlalchemy.dialects.postgresql import JSONB, INET
