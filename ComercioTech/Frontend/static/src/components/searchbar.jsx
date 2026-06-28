@@ -44,7 +44,7 @@ function SearchBar() {
       setCargando(true);
 
       fetch(
-        `/api/buscar?q=${encodeURIComponent(query)}&pagina=${pagina}&limite=10`,
+        `/api/productos/buscar?q=${encodeURIComponent(query)}&pagina=${pagina}&limite=10`,
         { signal: controller.signal }
       )
         .then((res) => res.json())
