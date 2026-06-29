@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getProductImage } from '../utils/getImage';
 
 export default function GridCard({ producto }) {
     const item = producto || {};
@@ -88,7 +89,7 @@ export default function GridCard({ producto }) {
             {/* Ruteo hacia la pestaña correspondiente en /assets/ usando la etiqueta */}
             <Link to={`/producto/${item._id || item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img 
-                    src="/placeholder.png" 
+                    src={getProductImage(item)} 
                     className="card-img-top p-3" 
                     alt={modelo} 
                     style={{ objectFit: 'contain', height: '180px' }} 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainHeader from './components/header';
+import { getProductImage } from './utils/getImage';
 import MainFooter from './components/footer';
 import GridCard from './components/gridCardProductos';
 
@@ -263,7 +264,7 @@ export default function DetalleProducto() {
             <div className="col-md-5 text-center border-end-md pb-4 pb-md-0">
               <div className="product-image-container p-3 mb-4 bg-light rounded d-flex align-items-center justify-content-center" style={{ height: '350px' }}>
                 <img 
-                  src="/placeholder.png" 
+                  src={getProductImage(producto)} 
                   alt={producto.nombre} 
                   className="img-fluid" 
                   style={{ maxHeight: '100%', objectFit: 'contain' }} 

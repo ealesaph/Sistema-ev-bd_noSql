@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainHeader from './components/header'
-import MainFooter from './components/footer'
+import MainFooter from './components/footer';
+import { getProductImage } from './utils/getImage';
 
 export default function CarritoCliente() {
   const [carrito, setCarrito] = useState([]);
@@ -294,7 +295,7 @@ export default function CarritoCliente() {
                           <td>
                             <div className="d-flex align-items-center gap-3">
                               <img 
-                                  src="/placeholder.png" 
+                                  src={getProductImage(item)} 
                                   alt={item.nombre} 
                                   className="carrito-item-img rounded"
                               />

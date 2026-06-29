@@ -14,7 +14,7 @@ import LoginUsuario from './loginUsuario.jsx'
 import RegistroUsuario from './registroUsuario.jsx'
 import CarritoCliente from './carritoCliente.jsx'
 import DetalleProducto from './detalleProducto.jsx'
-
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 
 createRoot(document.getElementById('root')).render(
@@ -31,7 +31,11 @@ createRoot(document.getElementById('root')).render(
         <Route path="/software" element={<Software />} />
         <Route path="/loginUsuario" element={<LoginUsuario />} />
         <Route path="/registroUsuario" element={<RegistroUsuario />} />
-        <Route path="/carritoCliente" element={<CarritoCliente />} />
+        <Route path="/carritoCliente" element={
+          <ProtectedRoute>
+            <CarritoCliente />
+          </ProtectedRoute>
+        } />
         <Route path="/producto/:id" element={<DetalleProducto />} />
       </Routes>
     </BrowserRouter>

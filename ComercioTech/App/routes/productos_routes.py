@@ -12,8 +12,9 @@ def obtener_productos():
     try:
         categoria = request.args.get('categoria')
         etiqueta = request.args.get('etiqueta')
-        busqueda = request.args.get('busqueda')
+        busqueda = request.args.get('busqueda') or request.args.get('q')
         activo = request.args.get('activo')
+        page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         
         filtro = {}
@@ -37,7 +38,8 @@ def obtener_productos():
         
         productos_collection = db_mongo.db.productos
         
-        productos = productos_collection.find(filtro).limit(limit)
+        skip = (page - 1) * limit
+        productos = productos_collection.find(filtro).skip(skip).limit(limit)
         
         resultado = []
         for producto in productos:

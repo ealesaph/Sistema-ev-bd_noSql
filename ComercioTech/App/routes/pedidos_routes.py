@@ -2,10 +2,12 @@ from flask import Blueprint, request, jsonify
 from app.config.database_config import db_sql
 from app.models.sql_models import Pedido, DetallePedido, Cliente, Producto
 from datetime import datetime
+from app.middleware.auth_middleware import token_requerido
 
 pedidos_bp = Blueprint('pedidos', __name__)
 
 @pedidos_bp.route('/', methods=['GET'])
+@token_requerido
 # URL: /api/pedidos
 def obtener_pedidos():
     try:
@@ -35,6 +37,7 @@ def obtener_pedidos():
         }), 500
 
 @pedidos_bp.route('/', methods=['POST'])
+@token_requerido
 # URL: /api/pedidos
 def crear_pedido():
     try:
