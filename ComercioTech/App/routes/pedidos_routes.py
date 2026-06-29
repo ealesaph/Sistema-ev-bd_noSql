@@ -40,10 +40,10 @@ def crear_pedido():
     try:
         datos = request.get_json()
         
-        if 'id_cliente' not in datos or 'productos' not in datos:
+        if 'id_cliente' not in datos or 'id_usuario' not in datos or 'productos' not in datos:
             return jsonify({
                 'exito': False,
-                'mensaje': 'Se requiere id_cliente y lista de productos'
+                'mensaje': 'Se requiere id_cliente, id_usuario y lista de productos'
             }), 400
         
         cliente = Cliente.query.get(datos['id_cliente'])
@@ -52,9 +52,18 @@ def crear_pedido():
                 'exito': False,
                 'mensaje': f'Cliente con ID {datos["id_cliente"]} no encontrado'
             }), 404
+            
+        from app.models.sql_models import Usuario
+        usuario = Usuario.query.get(datos['id_usuario'])
+        if not usuario:
+            return jsonify({
+                'exito': False,
+                'mensaje': f'Usuario con ID {datos["id_usuario"]} no encontrado'
+            }), 404
         
         nuevo_pedido = Pedido(
             id_cliente=datos['id_cliente'],
+            id_usuario=datos['id_usuario'],
             fecha_pedido=datetime.utcnow(),
             estado='PENDIENTE',
             total=0

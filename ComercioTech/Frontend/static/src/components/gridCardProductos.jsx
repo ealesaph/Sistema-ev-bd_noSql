@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function GridCard({ producto }) {
     const item = producto || {};
@@ -8,20 +9,58 @@ export default function GridCard({ producto }) {
         return null;
     }
 
-    const agregarProducto = (e) => {
-        e.preventDefault(); // Por si está dentro de un link
-        const carritoActual = JSON.parse(localStorage.getItem('carrito')) || [];
-        const itemId = item._id || item.id;
-        const index = carritoActual.findIndex(p => (p._id || p.id) === itemId);
-        
-        if (index >= 0) {
-            carritoActual[index].cantidad = (carritoActual[index].cantidad || 1) + 1;
-        } else {
-            carritoActual.push({ ...item, cantidad: 1 });
+    const agregarProducto = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const uStr = localStorage.getItem('usuario');
+        let idCliente = null;
+        if (uStr) {
+            try {
+                const u = JSON.parse(uStr);
+                idCliente = u.id_cliente;
+            } catch (err) {
+                console.error(err);
+            }
         }
-        
-        localStorage.setItem('carrito', JSON.stringify(carritoActual));
-        alert(`¡${item.nombre} añadido al carrito!`);
+
+        if (idCliente) {
+            try {
+                const response = await fetch('/leo/carrito/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cliente_id: idCliente,
+                        producto_id: item._id || item.id,
+                        cantidad: 1,
+                        nombre: item.nombre,
+                        precio_unitario: item.precio_actual || item.precio || 0,
+                        id_producto_sql: item.id_producto_sql
+                    })
+                });
+
+                if (response.ok) {
+                    alert(`¡${item.nombre} añadido a tu carrito en línea!`);
+                } else {
+                    alert('Error al agregar al carrito en la base de datos');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al agregar al carrito: problema de red');
+            }
+        } else {
+            const carritoActual = JSON.parse(localStorage.getItem('carrito')) || [];
+            const index = carritoActual.findIndex(c => (c._id || c.id) === (item._id || item.id));
+            
+            if (index !== -1) {
+                carritoActual[index].cantidad = (carritoActual[index].cantidad || 1) + 1;
+            } else {
+                carritoActual.push({ ...item, cantidad: 1 });
+            }
+            
+            localStorage.setItem('carrito', JSON.stringify(carritoActual));
+            alert(`¡${item.nombre} añadido al carrito local!`);
+        }
     };
 
     // Extraemos los datos según la estructura exacta de 'pruebas datos No Sql.py'
@@ -47,7 +86,7 @@ export default function GridCard({ producto }) {
             </div>
 
             {/* Ruteo hacia la pestaña correspondiente en /assets/ usando la etiqueta */}
-            <a href={`/assets/${etiqueta}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to={`/producto/${item._id || item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img 
                     src="/placeholder.png" 
                     className="card-img-top p-3" 
@@ -66,7 +105,7 @@ export default function GridCard({ producto }) {
                         </p>
                     )}
                 </div>
-            </a>
+            </Link>
             
             {/* 3. Precio actual al final junto al botón */}
             <div className="card-footer bg-white border-top-0 pt-0 pb-3">

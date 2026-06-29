@@ -88,6 +88,7 @@ def agregar_al_carrito():
                 'nombre': nombre,
                 'cantidad': cantidad,
                 'precio_unitario': precio_unitario,
+                'id_producto_sql': datos.get('id_producto_sql'),
                 'fecha_agregado': datetime.utcnow()
             })
         

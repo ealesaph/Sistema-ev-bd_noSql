@@ -52,7 +52,7 @@ class Auditoria(db_sql.Model):
     )
     
 class LogAuditoriaSeguridad(db_sql.Model):
-    __tablename__ = 'log_auditoria_seguridad'
+    __tablename__ = 'logauditoriaseguridad'
     #Tablas
     id_log = db_sql.Column(db_sql.Integer, primary_key = True)
     id_usuario = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('usuario.id_usuario'),nullable = True)
@@ -67,7 +67,7 @@ class LogAuditoriaSeguridad(db_sql.Model):
 
     
 class SolicitudEliminacion(db_sql.Model):
-    __tablename__ = 'solicitud_eliminacion'
+    __tablename__ = 'solicitudeliminacion'
     
     id_solicitud = db_sql.Column(db_sql.Integer, primary_key=True)
     id_cliente = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('cliente.id_cliente'), nullable=False)
@@ -103,7 +103,6 @@ class Cliente(db_sql.Model):
     # RELACIONES sin crear tablas, solo crean relaciones lógicas
     
     direcciones = db_sql.relationship('Direccion', backref='cliente', lazy=True)
-    pedidos = db_sql.relationship('Pedido', backref='cliente', lazy=True)
     #backref crea un atributo cliente en la clase Direccion
     # lazy=True Carga perezosa (Solo carga las direcciones cuando las necesites)
 
@@ -159,7 +158,7 @@ class Proveedor(db_sql.Model):
     
 class PagoProveedor(db_sql.Model):
     #Nombre Tabla
-    __tablename__ = 'pago_proveedor'
+    __tablename__ = 'pagoproveedor'
     #Columnas
     id_pago = db_sql.Column(db_sql.Integer, primary_key=True)
     id_proveedor = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('proveedor.id_proveedor'), nullable=False)
@@ -222,7 +221,7 @@ class Pedido(db_sql.Model):
 
 #------
 class DetallePedido(db_sql.Model):
-    __tablename__ = 'detalle_pedido'
+    __tablename__ = 'detallepedido'
     id_detalle = db_sql.Column(db_sql.Integer, primary_key=True)
     id_pedido = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('pedido.id_pedido'), nullable=False)
     id_producto = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('producto.id_producto'), nullable=False)

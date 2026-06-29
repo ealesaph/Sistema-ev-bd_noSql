@@ -620,3 +620,75 @@ header {
         font-size: 1rem;
     }
 }
+
+/* Estilos de Autenticación y Cabecera */
+.auth-card-container {
+    max-width: 450px;
+    width: 100%;
+    border-radius: 15px !important;
+}
+
+.auth-card-container-wide {
+    max-width: 600px;
+    width: 100%;
+    border-radius: 15px !important;
+}
+
+.header-user-status-text {
+    font-size: 0.9rem;
+}
+
+.header-logo-img {
+    height: 130px;
+    width: auto;
+}
+
+/* Estilos de Ficha de Producto y Reseñas */
+.product-image-container {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 0.3s ease;
+}
+
+.product-image-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 768px) {
+    .border-end-md {
+        border-right: 1px solid #dee2e6 !important;
+    }
+}
+
+/* Estilo para las tablas de especificaciones formales */
+.table-responsive table {
+    font-size: 0.95rem;
+}
+
+.table-responsive td {
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* Ocultar scrollbar horizontal feo en recomendaciones pero mantener scroll funcional */
+.overflow-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

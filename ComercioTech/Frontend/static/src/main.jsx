@@ -10,7 +10,10 @@ import Componentes from './componentes.jsx'
 import ConectividadRedes from './conectividadRedes.jsx'
 import Electronica from './electronica.jsx'
 import Software from './software.jsx'
+import LoginUsuario from './loginUsuario.jsx'
+import RegistroUsuario from './registroUsuario.jsx'
 import CarritoCliente from './carritoCliente.jsx'
+import DetalleProducto from './detalleProducto.jsx'
 
 
 
@@ -26,7 +29,10 @@ createRoot(document.getElementById('root')).render(
         <Route path="/conectividadRedes" element={<ConectividadRedes />} />
         <Route path="/electronica" element={<Electronica />} />
         <Route path="/software" element={<Software />} />
+        <Route path="/loginUsuario" element={<LoginUsuario />} />
+        <Route path="/registroUsuario" element={<RegistroUsuario />} />
         <Route path="/carritoCliente" element={<CarritoCliente />} />
+        <Route path="/producto/:id" element={<DetalleProducto />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

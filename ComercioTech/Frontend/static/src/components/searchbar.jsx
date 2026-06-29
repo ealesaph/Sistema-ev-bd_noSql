@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 // Envuelve las coincidencias de "term" dentro de "text" en <mark>
 function resaltarCoincidencias(text, term) {
@@ -114,12 +115,12 @@ function SearchBar() {
           <ul className="search-results-list">
             {resultados.map((r) => (
               <li key={r._id || r.id} className="search-result-item">
-                <a href={`/producto/${r._id || r.id}`} className="search-result-link">
+                <Link to={`/producto/${r._id || r.id}`} className="search-result-link">
                     <strong>{resaltarCoincidencias(r.nombre || "", query)}</strong>
                     <p className="search-result-desc">
                       {resaltarCoincidencias(r.descripcion || "", query)}
                     </p>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
