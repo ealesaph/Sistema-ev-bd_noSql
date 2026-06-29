@@ -16,11 +16,10 @@ def init_db(app):
     
     #Configuramos el Mongo
     app.config['MONGO_URI'] = (
-        'mongodb://app_comerciotech:OtraClaveSegura456!@localhost:27017/comerciotech'
-        '?authSource=comerciotech'
+        'mongodb://localhost:27017/comerciotech'
     )
-    #Segun la documentación debería ser algo así como: mongodb://Servidor:puerto/NombreBD
+    #Segun la documentación de PyMongo
+    #algo así como: mongodb://Servidor:puerto/NombreBD
     
     db_sql.init_app(app)
     db_mongo.init_app(app)
-    

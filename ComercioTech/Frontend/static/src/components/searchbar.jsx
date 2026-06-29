@@ -49,11 +49,15 @@ function SearchBar() {
       )
         .then((res) => res.json())
         .then((data) => {
-          setResultados(data.resultados);
-          setTotal(data.total);
+          setResultados(data.resultados || data.productos || []);
+          setTotal(data.total || 0);
         })
         .catch((err) => {
-          if (err.name !== "AbortError") console.error(err);
+          if (err.name !== "AbortError") {
+            console.error(err);
+            setResultados([]);
+            setTotal(0);
+          }
         })
         .finally(() => setCargando(false));
     }, 300);
@@ -89,11 +93,11 @@ function SearchBar() {
       {cargando && <p className="mt-2 text-muted">Buscando...</p>}
 
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {resultados.map((r) => (
-          <li key={r.id} style={{ padding: "6px 0", borderBottom: "1px solid #eee" }}>
-            <strong>{resaltarCoincidencias(r.nombre, query)}</strong>
+        {(resultados || []).map((r) => (
+          <li key={r._id || r.id} style={{ padding: "6px 0", borderBottom: "1px solid #eee" }}>
+            <strong>{resaltarCoincidencias(r.nombre || "", query)}</strong>
             <p style={{ margin: 0, fontSize: 13, color: "#666" }}>
-              {resaltarCoincidencias(r.descripcion, query)}
+              {resaltarCoincidencias(r.descripcion || "", query)}
             </p>
           </li>
         ))}

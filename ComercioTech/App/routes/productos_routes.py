@@ -88,17 +88,34 @@ def crear_producto():
         
 @productos_bp.route('/buscar', methods=['GET'])
 #URL EJMPLO: /api/productos/buscar?color=rojo&tamaño=M
+#URL BÚSQUEDA GENERAL: /api/productos/buscar?q=Laptop&pagina=1&limite=10
 def buscar_productos_por_atributo():
     try:
-        parametros = request.args.to_dict()
+        q = request.args.get('q')
+        pagina = int(request.args.get('pagina', 1))
+        limite = int(request.args.get('limite', 10))
         
-        if not parametros:
-            return obtener_productos()
-        filtro_atributos = {}
+        filtro = {}
+        
+        # Búsqueda por texto (si se proporciona 'q')
+        if q:
+            filtro['$or'] = [
+                {'nombre': {'$regex': q, '$options': 'i'}},
+                {'descripcion': {'$regex': q, '$options': 'i'}}
+            ]
+        
+        # Filtros adicionales por atributos (excluyendo parámetros de paginación y búsqueda general)
+        parametros = request.args.to_dict()
         for clave, valor in parametros.items():
-            filtro_atributos[f'atributos_variables.{clave}'] = valor
+            if clave not in ['q', 'pagina', 'limite']:
+                filtro[f'atributos_variables.{clave}'] = valor
+                
         productos_collection = db_mongo.db.productos
-        productos = productos_collection.find(filtro_atributos)
+        
+        # Calcular paginación
+        saltear = (pagina - 1) * limite
+        productos = productos_collection.find(filtro).skip(saltear).limit(limite)
+        total = productos_collection.count_documents(filtro)
         
         resultado = []
         for producto in productos:
@@ -108,8 +125,9 @@ def buscar_productos_por_atributo():
         return jsonify({
             'exito': True,
             'productos': resultado,
-            'total': len(resultado),
-            'filtros_aplicados': parametros
+            'resultados': resultado,  # Para compatibilidad con lo que espera el frontend (searchbar.jsx)
+            'total': total,
+            'filtros_aplicados': {k: v for k, v in parametros.items() if k not in ['pagina', 'limite']}
         }), 200
         
     except Exception as e:
