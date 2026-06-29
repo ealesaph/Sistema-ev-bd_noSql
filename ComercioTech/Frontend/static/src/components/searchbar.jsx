@@ -115,11 +115,16 @@ function SearchBar() {
           <ul className="search-results-list">
             {resultados.map((r) => (
               <li key={r._id || r.id} className="search-result-item">
-                <Link to={`/producto/${r._id || r.id}`} className="search-result-link">
-                    <strong>{resaltarCoincidencias(r.nombre || "", query)}</strong>
-                    <p className="search-result-desc">
-                      {resaltarCoincidencias(r.descripcion || "", query)}
-                    </p>
+                <Link to={`/producto/${r._id || r.id}`} className="search-result-link d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{resaltarCoincidencias(r.nombre || "", query)}</strong>
+                        <p className="search-result-desc">
+                          {resaltarCoincidencias(r.descripcion || "", query)}
+                        </p>
+                    </div>
+                    <span className="fw-bold text-price-brand ms-3">
+                        ${(r.precio_actual || r.precio || 0).toLocaleString('es-CL')}
+                    </span>
                 </Link>
               </li>
             ))}

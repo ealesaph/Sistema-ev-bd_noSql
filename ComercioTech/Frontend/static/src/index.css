@@ -692,3 +692,8 @@ header {
 .overflow-auto::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+/* Color de precio igual al del subheader (#c60000) */
+.text-price-brand {
+    color: #c60000 !important;
+}

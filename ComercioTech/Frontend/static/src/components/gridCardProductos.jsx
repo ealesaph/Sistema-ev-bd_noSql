@@ -110,7 +110,7 @@ export default function GridCard({ producto }) {
             {/* 3. Precio actual al final junto al botón */}
             <div className="card-footer bg-white border-top-0 pt-0 pb-3">
                 <div className="d-flex flex-column align-items-start">
-                    <span className="fs-4 fw-bold text-primary mb-2">
+                    <span className="fs-4 fw-bold text-price-brand mb-2">
                         ${precio.toLocaleString('es-CL')}
                     </span>
                     <button onClick={agregarProducto} className="btn btn-primary w-100 JnsnButton fw-bold">

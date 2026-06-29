@@ -291,7 +291,7 @@ export default function DetalleProducto() {
               <h1 className="fw-bold text-dark mb-3 fs-2">{producto.nombre}</h1>
               
               <div className="d-flex align-items-baseline gap-3 mb-4">
-                <span className="fs-2 fw-bold text-primary">${precio.toLocaleString('es-CL')}</span>
+                <span className="fs-2 fw-bold text-price-brand">${precio.toLocaleString('es-CL')}</span>
                 <span className="text-success fw-bold">Envío Gratis</span>
               </div>
 
@@ -322,17 +322,19 @@ export default function DetalleProducto() {
                 <div className="table-responsive">
                   <table className="table table-sm table-striped table-bordered align-middle">
                     <tbody>
-                      {Object.entries(producto.especificaciones_tecnicas || {}).map(([key, val]) => (
-                        <tr key={key}>
-                          <td className="fw-bold text-secondary text-capitalize px-3" style={{ width: '40%' }}>
-                            {key.replace(/_/g, ' ')}
-                          </td>
-                          <td className="px-3 text-dark">
-                            {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                          </td>
-                        </tr>
-                      ))}
-                      {Object.keys(producto.especificaciones_tecnicas || {}).length === 0 && (
+                      {Object.entries(producto.atributos || {})
+                        .filter(([_, val]) => val !== null && val !== undefined && val !== '')
+                        .map(([key, val]) => (
+                          <tr key={key}>
+                            <td className="fw-bold text-secondary text-capitalize px-3" style={{ width: '40%' }}>
+                              {key.replace(/_/g, ' ')}
+                            </td>
+                            <td className="px-3 text-dark">
+                              {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                            </td>
+                          </tr>
+                        ))}
+                      {Object.keys(producto.atributos || {}).length === 0 && (
                         <tr>
                           <td colSpan="2" className="text-muted text-center py-2">No hay especificaciones técnicas detalladas.</td>
                         </tr>
