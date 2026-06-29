@@ -48,5 +48,8 @@ def create_app():
         # En caso contrario, retorna el index.html para que React Router se encargue
         else:
             return app.send_static_file('index.html')
+
+
+    
             
     return app
