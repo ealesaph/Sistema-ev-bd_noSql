@@ -11,13 +11,23 @@ productos_bp = Blueprint('productos', __name__)
 def obtener_productos():
     try:
         categoria = request.args.get('categoria')
+        etiqueta = request.args.get('etiqueta')
         busqueda = request.args.get('busqueda')
+        activo = request.args.get('activo')
         limit = int(request.args.get('limit', 20))
         
         filtro = {}
         
         if categoria:
             filtro['categoria'] = categoria
+            
+        if etiqueta:
+            filtro['etiqueta'] = etiqueta
+            
+        if activo is not None:
+            filtro['activo'] = activo.lower() in ['true', '1', 'yes']
+        else:
+            filtro['activo'] = True
         
         if busqueda:
             filtro['$or'] = [

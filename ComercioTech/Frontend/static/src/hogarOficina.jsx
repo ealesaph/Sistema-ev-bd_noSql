@@ -1,5 +1,6 @@
 import MainHeader from './components/header'
 import MainFooter from './components/footer'
+import ListaProductosPorCategoria from './components/ListaProductosPorCategoria'
 
 export default function HogarOficina() {
   return (
@@ -8,7 +9,7 @@ export default function HogarOficina() {
       <div className="container page_container">
         <h1 className="text-center py-3 mb-5 rounded page_title">Hogar / Oficina</h1>
       </div>
-      <p>Contenido de Hogar y Oficina próximamente...</p>
+      <ListaProductosPorCategoria etiqueta="hogarOficina" />
       <MainFooter />
     </>
   )

@@ -1,5 +1,6 @@
 import MainHeader from './components/header'
 import MainFooter from './components/footer'
+import ListaProductosPorCategoria from './components/ListaProductosPorCategoria'
 
 export default function Computadores() {
   return (
@@ -8,7 +9,7 @@ export default function Computadores() {
       <div className="container page_container">
         <h1 className="text-center py-3 mb-5 rounded page_title">Computadores</h1>
       </div>
-      <p>Contenido de Computadores próximamente...</p>
+      <ListaProductosPorCategoria etiqueta="computadores" />
       <MainFooter />
     </>
   )

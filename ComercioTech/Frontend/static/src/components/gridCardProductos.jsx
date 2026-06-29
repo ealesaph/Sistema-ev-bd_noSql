@@ -8,11 +8,19 @@ export default function GridCard({ producto }) {
         return null;
     }
 
-    const agregarProducto = () => {
+    const agregarProducto = (e) => {
+        e.preventDefault(); // Por si está dentro de un link
         const carritoActual = JSON.parse(localStorage.getItem('carrito')) || [];
-        carritoActual.push(item);
+        const itemId = item._id || item.id;
+        const index = carritoActual.findIndex(p => (p._id || p.id) === itemId);
+        
+        if (index >= 0) {
+            carritoActual[index].cantidad = (carritoActual[index].cantidad || 1) + 1;
+        } else {
+            carritoActual.push({ ...item, cantidad: 1 });
+        }
+        
         localStorage.setItem('carrito', JSON.stringify(carritoActual));
-
         alert(`¡${item.nombre} añadido al carrito!`);
     };
 

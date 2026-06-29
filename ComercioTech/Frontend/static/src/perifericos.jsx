@@ -1,5 +1,6 @@
 import MainHeader from './components/header'
 import MainFooter from './components/footer'
+import ListaProductosPorCategoria from './components/ListaProductosPorCategoria'
 
 export default function Perifericos() {
   return (
@@ -8,7 +9,7 @@ export default function Perifericos() {
       <div className="container page_container">
         <h1 className="text-center py-3 mb-5 rounded page_title">Periféricos</h1>
       </div>
-      <p>Contenido de Periféricos próximamente...</p>
+      <ListaProductosPorCategoria etiqueta="perifericos" />
       <MainFooter />
     </>
   )
