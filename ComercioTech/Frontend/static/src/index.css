@@ -396,6 +396,135 @@ header {
     font-family: Georgia, serif;
 }
 
+/* Searchbar Styles */
+.search-mark {
+    background-color: #fff176;
+    padding: 0;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 52px; /* Espacio para el carrito */
+    background-color: white;
+    z-index: 9999;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #ddd;
+    border-top: none;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-dropdown.loading-dropdown {
+    right: 0;
+}
+
+.search-results-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes cascadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-result-item {
+    border-bottom: 1px solid #eee;
+    animation: cascadeIn 0.3s ease forwards;
+    opacity: 0;
+}
+
+.search-result-item:nth-child(1) { animation-delay: 0.05s; }
+.search-result-item:nth-child(2) { animation-delay: 0.10s; }
+.search-result-item:nth-child(3) { animation-delay: 0.15s; }
+.search-result-item:nth-child(4) { animation-delay: 0.20s; }
+.search-result-item:nth-child(5) { animation-delay: 0.25s; }
+.search-result-item:nth-child(6) { animation-delay: 0.30s; }
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-link {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+    padding: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.search-result-link:hover {
+    background-color: #f8f9fa;
+    color: inherit;
+}
+
+.search-result-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Carrito Cliente Styles */
+.carrito-container {
+    min-height: 55vh;
+}
+
+.carrito-table th {
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding-bottom: 1rem;
+}
+
+.carrito-table td {
+    padding: 1.5rem 0.5rem;
+}
+
+.carrito-item-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+    padding: 5px;
+}
+
+.btn-cantidad {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.btn-cantidad:hover {
+    background-color: #e9ecef;
+    color: black;
+}
+
+.carrito-resumen {
+    border-top: 5px solid #2b6be4;
+}
 
 @media (max-width: 1024px) {
     .main_navbar, .lower_navbar {
@@ -515,5 +644,254 @@ header {
     .landing-cta-btn {
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
+    }
+}
+
+/* Estilos de Autenticación y Cabecera */
+.auth-card-container {
+    max-width: 450px;
+    width: 100%;
+    border-radius: 15px !important;
+}
+
+.auth-card-container-wide {
+    max-width: 600px;
+    width: 100%;
+    border-radius: 15px !important;
+}
+
+.header-user-status-text {
+    font-size: 0.9rem;
+}
+
+.header-logo-img {
+    height: 130px;
+    width: auto;
+}
+
+/* Estilos de Ficha de Producto y Reseñas */
+.product-image-container {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 0.3s ease;
+}
+
+.product-image-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 768px) {
+    .border-end-md {
+        border-right: 1px solid #dee2e6 !important;
+    }
+}
+
+/* Estilo para las tablas de especificaciones formales */
+.table-responsive table {
+    font-size: 0.95rem;
+}
+
+.table-responsive td {
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* Ocultar scrollbar horizontal feo en recomendaciones pero mantener scroll funcional */
+.overflow-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Historial de Pedidos y Detalles */
+.table-primary-subtle {
+    background-color: rgba(43, 107, 228, 0.15) !important;
+}
+
+.border-bottom-subtle {
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.pedidos-container {
+    min-height: 60vh;
+}
+
+/* Color de precio igual al del subheader (#c60000) */
+.text-price-brand {
+    color: #c60000 !important;
+}
+
+/* Admin Header Custom CSS */
+.admin_navbar {
+    background-color: aliceblue !important;
+    padding: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-bottom: 2px solid #dee2e6;
+    position: relative;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.admin_navbar .logo_container {
+    position: absolute;
+    left: 24px;
+}
+
+.admin_navbar .header-logo-img {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+.admin_navbar .logo_container:hover {
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+.admin_navbar ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 3rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin_navbar a, .admin_navbar .btn-logout-link {
+    color: #c60000 !important;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.15rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    display: inline-block;
+}
+
+.admin_navbar a:hover, .admin_navbar .btn-logout-link:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+}
+
+/* Responsive media queries for Admin environment elements */
+@media (max-width: 1024px) {
+    .admin_navbar {
+        padding: 10px 40px !important;
+    }
+    .admin_navbar ul {
+        gap: 1.5rem !important;
+    }
+    .admin_navbar a, .admin_navbar .btn-logout-link {
+        font-size: 17px !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .admin_navbar {
+        flex-direction: column !important;
+        padding: 1rem !important;
+        gap: 1rem !important;
+    }
+    .admin_navbar .logo_container {
+        position: static !important;
+        margin-bottom: 0.5rem;
+    }
+    .admin_navbar ul {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    /* El grid de columnas se apila de forma natural */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin_navbar a, .admin_navbar .btn-logout-link {
+        font-size: 16px !important;
+        padding: 0.5rem !important;
+    }
+    /* Reducir tamaño de fuente en tablas para mejor ajuste móvil */
+    .table-responsive table {
+        font-size: 0.85rem !important;
+    }
+    .table-responsive th, .table-responsive td {
+        padding: 0.4rem 0.5rem !important;
+    }
+    /* Título de las páginas administrativas */
+    .page_title {
+        font-size: 1.8rem !important;
+        padding: 1.5rem 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    /* Tarjetas de indicadores financieros y stock en bodega */
+    .fs-3 {
+        font-size: 1.5rem !important;
+    }
+    .text-md-end {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin_navbar ul {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    .admin_navbar a, .admin_navbar .btn-logout-link {
+        display: block !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+    /* Estilo del logo a tamaño móvil */
+    .admin_navbar .logo_container img {
+        max-width: 200px !important;
+        height: auto !important;
+    }
+    /* Espaciado del contenedor principal */
+    .container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    /* Ajustar tamaño de texto en tablas para pantallas ultra-pequeñas */
+    .table {
+        font-size: 0.8rem !important;
+    }
+    /* Botones de acción principal en tarjetas y formularios */
+    .card-body .btn:not(.table .btn):not(.input-group .btn) {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    /* Asegurar que el grupo de entradas numéricas de stock se mantenga alineado en una línea */
+    .input-group {
+        flex-wrap: nowrap !important;
+    }
+    .input-group .btn {
+        width: auto !important;
+        margin-bottom: 0 !important;
     }
 }

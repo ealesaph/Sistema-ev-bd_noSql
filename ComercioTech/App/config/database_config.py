@@ -7,7 +7,7 @@ db_mongo = PyMongo()
 def init_db(app):
     #Config postreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = (
-        'postgresql://leo:1234@localhost:5432/comerciotech'
+        'postgresql://leo:1234@127.0.0.1:5432/comerciotech'
     )
     #El 5432 es el puerto estandar de Postre
     
@@ -16,11 +16,10 @@ def init_db(app):
     
     #Configuramos el Mongo
     app.config['MONGO_URI'] = (
-        'mongodb://app_comerciotech:OtraClaveSegura456!@localhost:27017/comerciotech'
-        '?authSource=comerciotech'
+        'mongodb://127.0.0.1:27017/comerciotech'
     )
-    #Segun la documentación debería ser algo así como: mongodb://Servidor:puerto/NombreBD
+    #Segun la documentación de PyMongo
+    #algo así como: mongodb://Servidor:puerto/NombreBD
     
     db_sql.init_app(app)
     db_mongo.init_app(app)
-    

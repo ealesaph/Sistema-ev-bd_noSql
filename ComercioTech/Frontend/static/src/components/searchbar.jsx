@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { getProductImage } from "../utils/getImage";
 
 // Envuelve las coincidencias de "term" dentro de "text" en <mark>
 function resaltarCoincidencias(text, term) {
@@ -10,7 +12,7 @@ function resaltarCoincidencias(text, term) {
 
   return partes.map((parte, i) =>
     parte.toLowerCase() === term.toLowerCase() ? (
-      <mark key={i} style={{ backgroundColor: "#fff176", padding: 0 }}>
+      <mark key={i} className="search-mark">
         {parte}
       </mark>
     ) : (
@@ -22,15 +24,24 @@ function resaltarCoincidencias(text, term) {
 function SearchBar() {
   const [query, setQuery] = useState("");
   const [resultados, setResultados] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [pagina, setPagina] = useState(1);
   const [cargando, setCargando] = useState(false);
+  const [mostrarResultados, setMostrarResultados] = useState(false);
   const abortControllerRef = useRef(null);
+  const searchContainerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setMostrarResultados(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!query.trim()) {
       setResultados([]);
-      setTotal(0);
       return;
     }
 
@@ -43,26 +54,30 @@ function SearchBar() {
       abortControllerRef.current = controller;
       setCargando(true);
 
+      // Límite de 6 resultados
       fetch(
-        `/api/buscar?q=${encodeURIComponent(query)}&pagina=${pagina}&limite=10`,
+        `/leo/productos/buscar?q=${encodeURIComponent(query)}&pagina=1&limite=6`,
         { signal: controller.signal }
       )
         .then((res) => res.json())
         .then((data) => {
-          setResultados(data.resultados);
-          setTotal(data.total);
+          setResultados(data.resultados || data.productos || []);
+          setMostrarResultados(true);
         })
         .catch((err) => {
-          if (err.name !== "AbortError") console.error(err);
+          if (err.name !== "AbortError") {
+            console.error(err);
+            setResultados([]);
+          }
         })
         .finally(() => setCargando(false));
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [query, pagina]);
+  }, [query]);
 
   return (
-    <div style={{ maxWidth: 450 }}>
+    <div className="flex-grow-1 position-relative mx-3" ref={searchContainerRef}>
       <div className="d-flex gap-2">
         <div className="input-group">
           <input
@@ -71,7 +86,10 @@ function SearchBar() {
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              setPagina(1);
+              setMostrarResultados(true);
+            }}
+            onFocus={() => {
+                if (query.trim()) setMostrarResultados(true);
             }}
             placeholder="Buscar productos..."
           />
@@ -80,37 +98,42 @@ function SearchBar() {
           </button>
         </div>
         
-        {/* Botón de Carrito agregado */}
-        <a href="/carritoCliente" className="btn btn-secondary d-flex align-items-center" title="Ir al Carrito">
+        <a href="/carritoCliente" className="btn btn-secondary d-flex align-items-center flex-shrink-0" title="Ir al Carrito">
           <i className="bi bi-cart"></i>
         </a>
       </div>
 
-      {cargando && <p className="mt-2 text-muted">Buscando...</p>}
+      {cargando && mostrarResultados && (
+        <div className="search-dropdown loading-dropdown p-2">
+            <p className="text-muted mb-0">Buscando...</p>
+        </div>
+      )}
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {resultados.map((r) => (
-          <li key={r.id} style={{ padding: "6px 0", borderBottom: "1px solid #eee" }}>
-            <strong>{resaltarCoincidencias(r.nombre, query)}</strong>
-            <p style={{ margin: 0, fontSize: 13, color: "#666" }}>
-              {resaltarCoincidencias(r.descripcion, query)}
-            </p>
-          </li>
-        ))}
-      </ul>
-
-      {total > 10 && (
-        <div>
-          <button disabled={pagina === 1} onClick={() => setPagina((p) => p - 1)}>
-            Anterior
-          </button>
-          <span style={{ margin: "0 8px" }}>Página {pagina}</span>
-          <button
-            disabled={pagina * 10 >= total}
-            onClick={() => setPagina((p) => p + 1)}
-          >
-            Siguiente
-          </button>
+      {!cargando && mostrarResultados && resultados.length > 0 && (
+        <div className="search-dropdown">
+          <ul className="search-results-list">
+            {resultados.map((r) => (
+              <li key={r._id || r.id} className="search-result-item">
+                <Link to={`/producto/${r._id || r.id}`} className="search-result-link d-flex align-items-center text-start">
+                    <img 
+                        src={getProductImage(r)} 
+                        alt="" 
+                        style={{ width: '45px', height: '45px', objectFit: 'contain', marginRight: '15px' }} 
+                        className="rounded bg-light p-1 border"
+                    />
+                    <div className="flex-grow-1 overflow-hidden">
+                        <strong className="d-block text-truncate">{resaltarCoincidencias(r.nombre || "", query)}</strong>
+                        <p className="search-result-desc text-truncate mb-0">
+                          {resaltarCoincidencias(r.descripcion || "", query)}
+                        </p>
+                    </div>
+                    <span className="fw-bold text-price-brand ms-3 flex-shrink-0">
+                        ${(r.precio_actual || r.precio || 0).toLocaleString('es-CL')}
+                    </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

@@ -37,6 +37,43 @@ def registrar_usuario():
             'mensaje': f'Error al registrar usuario: {str(e)}'
         }), 500
 
+# URL: /api/auth/register-cliente
+@auth_bp.route('/register-cliente', methods=['POST'])
+def registrar_cliente():
+    try:
+        datos = request.get_json()
+        
+        campos_requeridos = ['email', 'contraseña', 'nombre', 'apellido', 'rut']
+        for campo in campos_requeridos:
+            if campo not in datos:
+                return jsonify({
+                    'exito': False,
+                    'mensaje': f'El campo {campo} es obligatorio'
+                }), 400
+                
+        direccion_info = datos.get('direccion')
+        
+        resultado = AuthService.registrar_cliente_usuario(
+            email=datos['email'],
+            contraseña=datos['contraseña'],
+            nombre=datos['nombre'],
+            apellido=datos['apellido'],
+            rut=datos['rut'],
+            telefono=datos.get('telefono'),
+            direccion_info=direccion_info
+        )
+        
+        if resultado['exito']:
+            return jsonify(resultado), 201
+        else:
+            return jsonify(resultado), 400
+            
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al registrar cliente: {str(e)}'
+        }), 500
+
 # URL: /api/auth/login
 @auth_bp.route('/login', methods=['POST'])
 def login_usuario():

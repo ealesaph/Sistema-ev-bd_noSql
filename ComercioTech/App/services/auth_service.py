@@ -3,7 +3,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from flask import current_app
 from app.config.database_config import db_sql
-from app.models.sql_models import Usuario, Rol
+from app.models.sql_models import Usuario, Rol, Cliente, Direccion
 
 class AuthService:
     
@@ -94,6 +94,79 @@ class AuthService:
         except Exception as e:
             db_sql.session.rollback()
             return {'exito': False, 'mensaje': f'Error al registrar usuario: {str(e)}'}
+            
+    @staticmethod
+    def registrar_cliente_usuario(email, contraseña, nombre, apellido, rut, telefono=None, direccion_info=None):
+        """
+        Registra un usuario y un cliente de forma atómica.
+        Crea también su dirección de envío si se proporciona.
+        """
+        try:
+            # Verificar si el email ya existe en Usuario
+            usuario_existente = Usuario.query.filter_by(email=email).first()
+            if usuario_existente:
+                return {'exito': False, 'mensaje': 'El email ya está registrado'}
+                
+            # Verificar si el email o rut ya existe en Cliente
+            cliente_existente = Cliente.query.filter((Cliente.email == email) | (Cliente.rut == rut)).first()
+            if cliente_existente:
+                return {'exito': False, 'mensaje': 'El email o RUT ya está registrado como cliente'}
+                
+            # Buscar el rol de cliente (nombre = 'cliente')
+            rol = Rol.query.filter_by(nombre='cliente').first()
+            id_rol = rol.id_rol if rol else 2  # 2 es el ID por defecto si se insertaron secuencialmente
+            
+            # Crear Usuario
+            nuevo_usuario = Usuario(
+                email=email,
+                contrasena_hash=AuthService.hash_password(contraseña),
+                nombre=nombre,
+                apellido=apellido,
+                id_rol=id_rol,
+                activo=True
+            )
+            db_sql.session.add(nuevo_usuario)
+            
+            # Crear Cliente
+            nuevo_cliente = Cliente(
+                nombre=nombre,
+                apellido=apellido,
+                email=email,
+                telefono=telefono,
+                rut=rut,
+                activo=True,
+                fecha_registro=datetime.utcnow()
+            )
+            db_sql.session.add(nuevo_cliente)
+            db_sql.session.flush()  # Para que nuevo_cliente obtenga su id_cliente autogenerado
+            
+            # Crear Dirección si está presente
+            if direccion_info:
+                nueva_direccion = Direccion(
+                    id_cliente=nuevo_cliente.id_cliente,
+                    calle=direccion_info.get('calle'),
+                    numero=direccion_info.get('numero', ''),
+                    comuna=direccion_info.get('comuna'),
+                    ciudad=direccion_info.get('ciudad'),
+                    region=direccion_info.get('region', ''),
+                    pais=direccion_info.get('pais', 'Chile'),
+                    codigo_postal=direccion_info.get('codigo_postal', ''),
+                    tipo='ENVIO'
+                )
+                db_sql.session.add(nueva_direccion)
+                
+            db_sql.session.commit()
+            
+            return {
+                'exito': True,
+                'mensaje': 'Registro completado exitosamente',
+                'usuario_id': nuevo_usuario.id_usuario,
+                'cliente_id': nuevo_cliente.id_cliente
+            }
+            
+        except Exception as e:
+            db_sql.session.rollback()
+            return {'exito': False, 'mensaje': f'Error al registrar cliente: {str(e)}'}
     
     @staticmethod
     def login_usuario(email, contraseña):
@@ -120,12 +193,17 @@ class AuthService:
             # Obtener información del rol
             rol = usuario.rol
             
+            # Obtener el cliente asociado por email
+            cliente = Cliente.query.filter_by(email=usuario.email).first()
+            id_cliente = cliente.id_cliente if cliente else None
+            
             return {
                 'exito': True,
                 'mensaje': 'Login exitoso',
                 'token': token,
                 'usuario': {
                     'id_usuario': usuario.id_usuario,
+                    'id_cliente': id_cliente,
                     'email': usuario.email,
                     'nombre': usuario.nombre,
                     'apellido': usuario.apellido,

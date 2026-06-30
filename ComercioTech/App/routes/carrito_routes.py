@@ -25,6 +25,18 @@ def obtener_carrito(cliente_id):
         
         carrito['_id'] = str(carrito['_id'])
         
+        # Enriquecer los items del carrito con los detalles actualizados del producto
+        productos_collection = db_mongo.db.productos
+        for item in carrito.get('items', []):
+            try:
+                prod = productos_collection.find_one({'_id': ObjectId(item['producto_id'])})
+                if prod:
+                    item['categoria'] = prod.get('categoria', '')
+                    item['sku'] = prod.get('sku', '')
+                    item['atributos'] = prod.get('atributos', prod.get('atributos_variables', {}))
+            except Exception:
+                pass
+                
         return jsonify({
             'exito': True,
             'carrito': carrito
@@ -88,6 +100,10 @@ def agregar_al_carrito():
                 'nombre': nombre,
                 'cantidad': cantidad,
                 'precio_unitario': precio_unitario,
+                'id_producto_sql': datos.get('id_producto_sql'),
+                'categoria': datos.get('categoria', ''),
+                'sku': datos.get('sku', ''),
+                'atributos': datos.get('atributos', {}),
                 'fecha_agregado': datetime.utcnow()
             })
         
