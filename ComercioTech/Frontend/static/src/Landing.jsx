@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import Carroussel from './components/carrusel';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -8,8 +7,11 @@ export default function Landing() {
     <main className="landing-page">
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <h1 className="landing-title">Bienvenido a ComercioTech</h1>
-          <p className="landing-subtitle">Encuentra tecnología, componentes y accesorios con los mejores precios y soporte local. Regístrate para ofertas exclusivas y comienza a comprar hoy.</p>
+          <h1 className="landing-title">Compra tecnología con confianza</h1>
+          <p className="landing-subtitle">
+            Descubre equipos, accesorios y soluciones para tu hogar o negocio con precios competitivos,
+            asesoría cercana y envío rápido.
+          </p>
           <div className="d-flex justify-content-center gap-3">
             <button className="landing-cta-btn" onClick={() => navigate('/registroUsuario')}>Crear cuenta</button>
             <button className="landing-cta-btn" onClick={() => navigate('/componentes')}>Ver productos</button>
@@ -17,7 +19,25 @@ export default function Landing() {
         </div>
       </section>
 
-      <Carroussel />
+      <section className="landing-testimonials">
+        <h2 className="landing-section-title">¿Por qué elegir ComercioTech?</h2>
+        <div className="testimonials-grid">
+          <div className="testimonial-card">
+            <p className="testimonial-name">Variedad</p>
+            <p className="testimonial-body">Encuentra hardware, software, redes y accesorios en un solo lugar.</p>
+          </div>
+
+          <div className="testimonial-card">
+            <p className="testimonial-name">Asesoría</p>
+            <p className="testimonial-body">Nuestro equipo te acompaña para elegir lo más adecuado para tus necesidades.</p>
+          </div>
+
+          <div className="testimonial-card">
+            <p className="testimonial-name">Conveniencia</p>
+            <p className="testimonial-body">Compra desde cualquier dispositivo y revisa tus pedidos con facilidad.</p>
+          </div>
+        </div>
+      </section>
 
       <section className="landing-testimonials">
         <h2 className="landing-section-title">Lo que dicen nuestros clientes</h2>

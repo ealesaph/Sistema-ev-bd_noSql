@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-import MainHeader from './components/header';
-import MainFooter from './components/footer';
-import Carroussel from './components/carrusel';
-import Landing from './Landing.jsx';
-=======
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainHeader from './components/header';
 import MainFooter from './components/footer';
-import Carroussel from './components/carrusel';
->>>>>>> main
+import Landing from './Landing.jsx';
 
 function App() {
   const navigate = useNavigate();
@@ -20,7 +13,6 @@ function App() {
       try {
         const usuario = JSON.parse(usuarioStr);
         if (usuario.rol === 'Administrador') {
-          // Redirigir al panel de administración si es admin
           navigate('/admin/clientes', { replace: true });
         }
       } catch (e) {
