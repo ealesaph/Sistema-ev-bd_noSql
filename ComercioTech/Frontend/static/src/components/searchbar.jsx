@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { getProductImage } from "../utils/getImage";
 
 // Envuelve las coincidencias de "term" dentro de "text" en <mark>
 function resaltarCoincidencias(text, term) {
@@ -28,7 +29,6 @@ function SearchBar() {
   const abortControllerRef = useRef(null);
   const searchContainerRef = useRef(null);
 
-  // Cerrar resultados al hacer clic fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
@@ -98,7 +98,6 @@ function SearchBar() {
           </button>
         </div>
         
-        {/* Botón de Carrito agregado */}
         <a href="/carritoCliente" className="btn btn-secondary d-flex align-items-center flex-shrink-0" title="Ir al Carrito">
           <i className="bi bi-cart"></i>
         </a>
@@ -115,14 +114,20 @@ function SearchBar() {
           <ul className="search-results-list">
             {resultados.map((r) => (
               <li key={r._id || r.id} className="search-result-item">
-                <Link to={`/producto/${r._id || r.id}`} className="search-result-link d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{resaltarCoincidencias(r.nombre || "", query)}</strong>
-                        <p className="search-result-desc">
+                <Link to={`/producto/${r._id || r.id}`} className="search-result-link d-flex align-items-center text-start">
+                    <img 
+                        src={getProductImage(r)} 
+                        alt="" 
+                        style={{ width: '45px', height: '45px', objectFit: 'contain', marginRight: '15px' }} 
+                        className="rounded bg-light p-1 border"
+                    />
+                    <div className="flex-grow-1 overflow-hidden">
+                        <strong className="d-block text-truncate">{resaltarCoincidencias(r.nombre || "", query)}</strong>
+                        <p className="search-result-desc text-truncate mb-0">
                           {resaltarCoincidencias(r.descripcion || "", query)}
                         </p>
                     </div>
-                    <span className="fw-bold text-price-brand ms-3">
+                    <span className="fw-bold text-price-brand ms-3 flex-shrink-0">
                         ${(r.precio_actual || r.precio || 0).toLocaleString('es-CL')}
                     </span>
                 </Link>

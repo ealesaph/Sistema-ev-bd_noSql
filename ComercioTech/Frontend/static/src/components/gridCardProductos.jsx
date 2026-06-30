@@ -36,7 +36,10 @@ export default function GridCard({ producto }) {
                         cantidad: 1,
                         nombre: item.nombre,
                         precio_unitario: item.precio_actual || item.precio || 0,
-                        id_producto_sql: item.id_producto_sql
+                        id_producto_sql: item.id_producto_sql,
+                        categoria: item.categoria,
+                        sku: item.sku,
+                        atributos: item.atributos
                     })
                 });
 
@@ -79,14 +82,12 @@ export default function GridCard({ producto }) {
 
     return (
         <div className="card h-100 shadow-sm border-0" style={{ transition: "transform 0.2s" }}>
-            {/* 1. Marca en el tope de la card */}
             <div className="card-header bg-white border-bottom-0 pt-3 pb-0">
                 <span className="text-muted fw-bold text-uppercase" style={{ fontSize: '0.8rem' }}>
                     {marca}
                 </span>
             </div>
 
-            {/* Ruteo hacia la pestaña correspondiente en /assets/ usando la etiqueta */}
             <Link to={`/producto/${item._id || item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img 
                     src={getProductImage(item)} 
@@ -95,7 +96,6 @@ export default function GridCard({ producto }) {
                     style={{ objectFit: 'contain', height: '180px' }} 
                 />
                 
-                {/* 2. Modelo debajo de la imagen al medio */}
                 <div className="card-body pt-0 pb-2">
                     <h5 className="card-title text-dark mb-1" style={{ fontSize: '1.1rem', lineHeight: '1.4' }}>
                         {modelo}
@@ -108,7 +108,6 @@ export default function GridCard({ producto }) {
                 </div>
             </Link>
             
-            {/* 3. Precio actual al final junto al botón */}
             <div className="card-footer bg-white border-top-0 pt-0 pb-3">
                 <div className="d-flex flex-column align-items-start">
                     <span className="fs-4 fw-bold text-price-brand mb-2">

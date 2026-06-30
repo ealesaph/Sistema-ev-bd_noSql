@@ -3,6 +3,8 @@ from app.config.database_config import db_mongo, db_sql
 from bson import ObjectId
 from datetime import datetime
 import re
+from app.models.sql_models import Producto as ProductoSQL, Proveedor, PagoProveedor, Usuario
+from app.middleware.auth_middleware import token_requerido, rol_requerido
 
 productos_bp = Blueprint('productos', __name__)
 
@@ -363,3 +365,178 @@ def crear_resena(producto_id):
             'exito': False,
             'mensaje': f'Error al publicar reseña: {str(e)}'
         }), 500
+
+@productos_bp.route('/admin/stock', methods=['GET'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def listar_stock_admin():
+    try:
+        productos = ProductoSQL.query.all()
+        resultado = []
+        for p in productos:
+            resultado.append({
+                'id_producto': p.id_producto,
+                'nombre': p.nombre,
+                'stock': p.stock,
+                'precio': float(p.precio),
+                'activo': p.activo,
+                'proveedor': p.proveedor.nombre if p.proveedor else 'Sin Proveedor'
+            })
+        return jsonify({
+            'exito': True,
+            'productos': resultado,
+            'total': len(resultado)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al obtener stock: {str(e)}'
+        }), 500
+
+@productos_bp.route('/<int:id_producto>/stock', methods=['POST'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def actualizar_stock_producto(id_producto):
+    try:
+        datos = request.get_json()
+        cantidad_cambio = int(datos.get('cantidad_cambio', 0))
+        if cantidad_cambio == 0:
+            return jsonify({'exito': False, 'mensaje': 'El cambio de cantidad no puede ser cero'}), 400
+            
+        # 1. Obtener producto en SQL
+        producto = ProductoSQL.query.get(id_producto)
+        if not producto:
+            return jsonify({'exito': False, 'mensaje': 'Producto no encontrado en PostgreSQL'}), 404
+            
+        nuevo_stock = producto.stock + cantidad_cambio
+        if nuevo_stock < 0:
+            return jsonify({'exito': False, 'mensaje': f'Stock insuficiente. Stock actual: {producto.stock}'}), 400
+            
+        # 2. Modificar stock en SQL
+        producto.stock = nuevo_stock
+        
+        # 3. Lógica de PagoProveedor (Cuentas por Pagar)
+        costo_unitario = float(producto.precio)
+        costo_total = abs(cantidad_cambio) * costo_unitario
+        
+        if cantidad_cambio > 0:
+            # Aumento de stock: Crear una cuenta por pagar al proveedor
+            pago = PagoProveedor(
+                id_proveedor=producto.id_proveedor,
+                monto=costo_total,
+                metodo_pago='TRANSFERENCIA',
+                estado='PENDIENTE',
+                referencia=f'Abastecimiento de {cantidad_cambio} unidades de {producto.nombre}',
+                fecha_creacion=datetime.utcnow()
+            )
+            db_sql.session.add(pago)
+        else:
+            # Disminución de stock: Buscar el último pago pendiente al proveedor para restar
+            pago_pendiente = PagoProveedor.query.filter_by(
+                id_proveedor=producto.id_proveedor,
+                estado='PENDIENTE'
+            ).order_by(PagoProveedor.fecha_creacion.desc()).first()
+            
+            if pago_pendiente:
+                nuevo_monto = float(pago_pendiente.monto) - costo_total
+                if nuevo_monto <= 0:
+                    db_sql.session.delete(pago_pendiente)
+                else:
+                    pago_pendiente.monto = nuevo_monto
+            
+        # 4. Modificar en MongoDB (Mantener consistencia)
+        db_mongo.db.productos.update_one(
+            {'id_producto_sql': id_producto},
+            {'$set': {'stock': nuevo_stock}}
+        )
+        
+        # Guardar todo en SQL
+        db_sql.session.commit()
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Stock actualizado y registro de proveedor procesado en transacción ACID',
+            'nuevo_stock': nuevo_stock
+        }), 200
+        
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({'exito': False, 'mensaje': f'Error al actualizar stock: {str(e)}'}), 500
+
+@productos_bp.route('/proveedores', methods=['GET'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def listar_proveedores_admin():
+    try:
+        proveedores = Proveedor.query.all()
+        resultado = []
+        for prov in proveedores:
+            resultado.append({
+                'id_proveedor': prov.id_proveedor,
+                'nombre': prov.nombre,
+                'rut': prov.rut,
+                'email': prov.email,
+                'telefono': prov.telefono,
+                'activo': prov.activo
+            })
+        return jsonify({
+            'exito': True,
+            'proveedores': resultado,
+            'total': len(resultado)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al obtener proveedores: {str(e)}'
+        }), 500
+
+@productos_bp.route('/proveedores/pagos', methods=['GET'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def listar_pagos_proveedores():
+    try:
+        pagos = PagoProveedor.query.order_by(PagoProveedor.fecha_creacion.desc()).all()
+        resultado = []
+        for p in pagos:
+            resultado.append({
+                'id_pago': p.id_pago,
+                'id_proveedor': p.id_proveedor,
+                'proveedor': p.proveedor.nombre if p.proveedor else 'Desconocido',
+                'monto': float(p.monto),
+                'metodo_pago': p.metodo_pago,
+                'estado': p.estado,
+                'referencia': p.referencia,
+                'fecha_pago': p.fecha_pago.strftime('%Y-%m-%d') if p.fecha_pago else None,
+                'fecha_creacion': p.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        return jsonify({
+            'exito': True,
+            'pagos': resultado,
+            'total': len(resultado)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al obtener pagos: {str(e)}'
+        }), 500
+
+@productos_bp.route('/proveedores/pagos/<int:id_pago>/pagar', methods=['POST'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def pagar_proveedor(id_pago):
+    try:
+        pago = PagoProveedor.query.get(id_pago)
+        if not pago:
+            return jsonify({'exito': False, 'mensaje': 'Registro de pago no encontrado'}), 404
+            
+        pago.estado = 'PAGADO'
+        pago.fecha_pago = datetime.utcnow().date()
+        db_sql.session.commit()
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Pago al proveedor registrado exitosamente'
+        }), 200
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({'exito': False, 'mensaje': f'Error al registrar pago: {str(e)}'}), 500

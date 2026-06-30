@@ -16,7 +16,6 @@ export default function CarritoCliente() {
     const inicializarCarrito = async () => {
       setLoading(true);
       
-      // 1. Obtener datos del usuario logueado
       const uStr = localStorage.getItem('usuario');
       let currentIdCliente = null;
       let currentUsuario = null;
@@ -32,12 +31,10 @@ export default function CarritoCliente() {
         }
       }
 
-      // 2. Obtener carrito local de invitado (si existe)
       const carritoLocal = JSON.parse(localStorage.getItem('carrito')) || [];
 
       if (currentIdCliente) {
         try {
-          // Si hay artículos en el carrito local, sincronizarlos con la base de datos MongoDB
           if (carritoLocal.length > 0) {
             for (const item of carritoLocal) {
               await fetch('/leo/carrito/', {
@@ -51,15 +48,15 @@ export default function CarritoCliente() {
                   cantidad: item.cantidad || 1,
                   nombre: item.nombre,
                   precio_unitario: item.precio_actual || item.precio || 0,
-                  id_producto_sql: item.id_producto_sql
+                  id_producto_sql: item.id_producto_sql,
+                  categoria: item.categoria,
+                  sku: item.sku,
+                  atributos: item.atributos
                 })
               });
             }
-            // Limpiar el carrito local una vez sincronizado
             localStorage.removeItem('carrito');
           }
-
-          // Cargar el carrito definitivo de MongoDB
           const response = await fetch(`/leo/carrito/${currentIdCliente}`);
           const data = await response.json();
           if (data.exito && data.carrito) {
@@ -71,7 +68,6 @@ export default function CarritoCliente() {
           console.error('Error al sincronizar/cargar carrito desde MongoDB:', err);
         }
       } else {
-        // Usuario no logueado, usar sólo localStorage
         setCarrito(carritoLocal);
       }
       
@@ -87,7 +83,6 @@ export default function CarritoCliente() {
         const itemObj = carrito.find(item => (item.producto_id || item._id || item.id) === id);
         if (!itemObj) return;
 
-        // Evitar que la cantidad sea menor a 1
         if (delta === -1 && (itemObj.cantidad || 1) <= 1) return;
 
         const response = await fetch('/leo/carrito/', {
@@ -199,7 +194,6 @@ export default function CarritoCliente() {
     try {
       setLoadingCheckout(true);
 
-      // Mapear los productos a los IDs correspondientes en PostgreSQL
       const productosPayload = carrito.map(item => {
         const sqlId = item.id_producto_sql;
         if (!sqlId) {
@@ -211,10 +205,12 @@ export default function CarritoCliente() {
         };
       });
 
+      const token = localStorage.getItem('token');
       const response = await fetch('/leo/pedidos/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           id_cliente: idCliente,
@@ -228,7 +224,6 @@ export default function CarritoCliente() {
       if (response.ok && data.exito) {
         alert('¡Compra realizada con éxito! Tu orden ha sido registrada en PostgreSQL.');
         
-        // Vaciar el carrito en MongoDB tras la compra exitosa
         await fetch(`/leo/carrito/${idCliente}`, {
           method: 'DELETE'
         });

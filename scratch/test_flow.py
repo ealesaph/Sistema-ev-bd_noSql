@@ -176,7 +176,7 @@ def test_integration():
             }
         ]
     }
-    res = client.post('/leo/pedidos/', json=pedido_payload)
+    res = client.post('/leo/pedidos/', json=pedido_payload, headers={'Authorization': f'Bearer {token}'})
     data = res.get_json()
     assert res.status_code == 201, f"Error al crear pedido: {data}"
     assert data['exito'] is True
@@ -199,7 +199,24 @@ def test_integration():
     assert len(data['resenas']) == 1
     assert data['resenas'][0]['titulo'] == "Excelente!"
     assert data['resenas'][0]['rating'] == 5
-    print("Reseña verificada exitosamente en el listado!")
+    # 10. Listar Pedidos del Cliente y Consultar Detalle de un Pedido
+    print("\nPaso 10: Listando historial de pedidos y obteniendo detalles...")
+    res = client.get('/leo/pedidos/', headers={'Authorization': f'Bearer {token}'})
+    data = res.get_json()
+    assert res.status_code == 200, f"Error al listar pedidos: {data}"
+    assert data['exito'] is True
+    assert len(data['pedidos']) >= 1, "Debe haber al menos un pedido en el historial"
+    print(f"Pedidos recuperados en el historial: {len(data['pedidos'])}")
+    
+    # Consultar detalle del pedido creado en Paso 7
+    res = client.get(f'/leo/pedidos/{id_pedido}', headers={'Authorization': f'Bearer {token}'})
+    data = res.get_json()
+    assert res.status_code == 200, f"Error al obtener detalle del pedido: {data}"
+    assert data['exito'] is True
+    assert data['pedido']['id_pedido'] == id_pedido
+    assert len(data['pedido']['detalles']) == 1
+    assert data['pedido']['detalles'][0]['id_producto'] == id_producto_sql
+    print("Detalles del pedido verificados con éxito a través del endpoint seguro!")
 
     print("\n¡TODAS LAS PRUEBAS DE INTEGRACIÓN PASARON EXITOSAMENTE!")
 

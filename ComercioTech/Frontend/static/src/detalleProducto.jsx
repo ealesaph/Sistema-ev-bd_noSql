@@ -111,7 +111,10 @@ export default function DetalleProducto() {
             cantidad: 1,
             nombre: producto.nombre,
             precio_unitario: producto.precio_actual || producto.precio || 0,
-            id_producto_sql: producto.id_producto_sql
+            id_producto_sql: producto.id_producto_sql,
+            categoria: producto.categoria,
+            sku: producto.sku,
+            atributos: producto.atributos
           })
         });
 

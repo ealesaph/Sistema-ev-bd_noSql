@@ -4,14 +4,12 @@ from flask import Blueprint, jsonify, request
 #jsonify = Convierte diccionarios de Python a JSON para la respuesta HTTP
 from app.config.database_config import db_sql
 #la idea es que el objeto maneje la conexión al Postre, con esto hacemos consultas
-from app.models.sql_models import Cliente, Direccion, SolicitudEliminacion, Auditoria
+from app.models.sql_models import Cliente, Direccion, SolicitudEliminacion, Auditoria, Usuario, Pedido
 from datetime import datetime
-from app.models.sql_models import SolicitudEliminacion
 import secrets
 from app.middleware.auth_middleware import token_requerido, rol_requerido
 
-#Blueprints!
-#Primero Creamos el BP clientes
+
 clientes_bp = Blueprint('clientes', __name__)
 
 #Luego le aplicamos su Getter a los clientes
@@ -175,6 +173,8 @@ def actualizar_cliente(id_cliente):
         }), 500 # 500 = Error del servidor
 
 @clientes_bp.route('/<int:id_cliente>', methods=['DELETE'])
+@token_requerido
+@rol_requerido(['Administrador'])
 #URL: /api/clientes/<id>
 def eliminar_cliente(id_cliente):
     try:
@@ -186,12 +186,24 @@ def eliminar_cliente(id_cliente):
                 'mensaje': f'Cliente con ID {id_cliente} no encontrado'
             }), 404
             
+        # Verificar integridad referencial: si posee pedidos históricos
+        pedidos_count = Pedido.query.filter_by(id_cliente=id_cliente).count()
+        if pedidos_count > 0:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'No es posible eliminar físicamente al cliente porque posee pedidos históricos en ComercioTech. Utilice la Anonimización (Derecho al Olvido) para borrar sus datos sensibles.'
+            }), 400
+            
+        usuario = Usuario.query.filter_by(email=cliente.email).first()
+        if usuario:
+            db_sql.session.delete(usuario)
+            
         db_sql.session.delete(cliente)
         db_sql.session.commit()
         
         return jsonify({
             'exito': True,
-            'mensaje': 'Cliente eliminado exitosamente'
+            'mensaje': 'Cliente y usuario asociado eliminados exitosamente'
         }), 200
         
     except Exception as e:
@@ -255,7 +267,7 @@ def solicitar_eliminacion(id_cliente):
 # URL: /api/clientes/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>
 @clientes_bp.route('/<int:id_cliente>/aprobar-eliminacion/<int:id_solicitud>', methods=['POST'])
 @token_requerido
-@rol_requerido(['admin', 'financiero'])  # Solo administradores/financieros
+@rol_requerido(['Administrador'])
 def aprobar_eliminacion(id_cliente, id_solicitud):
 
     try:
@@ -326,3 +338,140 @@ def aprobar_eliminacion(id_cliente, id_solicitud):
             'exito': False,
             'mensaje': f'Error al procesar eliminación: {str(e)}'
         }), 500
+
+@clientes_bp.route('/admin-list', methods=['GET'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def listar_clientes_admin():
+    try:
+        clientes = Cliente.query.all()
+        resultado = []
+        for cliente in clientes:
+            usuario = Usuario.query.filter_by(email=cliente.email).first()
+            usuario_activo = usuario.activo if usuario else True
+            usuario_id = usuario.id_usuario if usuario else None
+            
+            resultado.append({
+                'id_cliente': cliente.id_cliente,
+                'id_usuario': usuario_id,
+                'nombre': f"{cliente.nombre} {cliente.apellido}" if hasattr(cliente, 'apellido') else cliente.nombre,
+                'email': cliente.email,
+                'telefono': cliente.telefono,
+                'rut': cliente.rut,
+                'activo_usuario': usuario_activo,
+                'fecha_registro': cliente.fecha_registro.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        return jsonify({
+            'exito': True,
+            'clientes': resultado,
+            'total': len(resultado)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al obtener listado: {str(e)}'
+        }), 500
+
+@clientes_bp.route('/<int:id_cliente>/desactivar', methods=['POST'])
+@token_requerido
+@rol_requerido(['Administrador'])
+def desactivar_usuario_cliente(id_cliente):
+    try:
+        cliente = Cliente.query.get(id_cliente)
+        if not cliente:
+            return jsonify({'exito': False, 'mensaje': 'Cliente no encontrado'}), 404
+            
+        usuario = Usuario.query.filter_by(email=cliente.email).first()
+        if not usuario:
+            return jsonify({'exito': False, 'mensaje': 'Usuario asociado no encontrado'}), 404
+            
+        # Bloquear/Desbloquear
+        usuario.activo = not usuario.activo
+        db_sql.session.commit()
+        
+        estado_str = "activado" if usuario.activo else "desactivado"
+        return jsonify({
+            'exito': True,
+            'mensaje': f'Usuario {estado_str} exitosamente',
+            'activo_usuario': usuario.activo
+        }), 200
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({'exito': False, 'mensaje': f'Error al cambiar estado: {str(e)}'}), 500
+
+@clientes_bp.route('/direcciones', methods=['POST'])
+@token_requerido
+def crear_direccion():
+    try:
+        payload = request.usuario_payload
+        usuario_id = payload['usuario_id']
+        
+        usuario = Usuario.query.get(usuario_id)
+        if not usuario:
+            return jsonify({'exito': False, 'mensaje': 'Usuario no encontrado'}), 404
+            
+        cliente = Cliente.query.filter_by(email=usuario.email).first()
+        if not cliente:
+            return jsonify({'exito': False, 'mensaje': 'Cliente no encontrado'}), 404
+            
+        datos = request.get_json()
+        campos_requeridos = ['calle', 'comuna', 'ciudad', 'tipo']
+        for campo in campos_requeridos:
+            if campo not in datos:
+                return jsonify({'exito': False, 'mensaje': f'El campo {campo} es obligatorio'}), 400
+                
+        nueva_direccion = Direccion(
+            id_cliente=cliente.id_cliente,
+            calle=datos['calle'],
+            numero=datos.get('numero'),
+            comuna=datos['comuna'],
+            ciudad=datos['ciudad'],
+            region=datos.get('region'),
+            codigo_postal=datos.get('codigo_postal'),
+            tipo=datos['tipo']
+        )
+        
+        db_sql.session.add(nueva_direccion)
+        db_sql.session.commit()
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Dirección creada exitosamente',
+            'direccion': {
+                'id_direccion': nueva_direccion.id_direccion,
+                'calle': nueva_direccion.calle,
+                'comuna': nueva_direccion.comuna,
+                'ciudad': nueva_direccion.ciudad,
+                'tipo': nueva_direccion.tipo
+            }
+        }), 201
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({'exito': False, 'mensaje': f'Error al guardar dirección: {str(e)}'}), 500
+
+@clientes_bp.route('/direcciones/<int:id_direccion>', methods=['DELETE'])
+@token_requerido
+def eliminar_direccion(id_direccion):
+    try:
+        payload = request.usuario_payload
+        usuario_id = payload['usuario_id']
+        
+        usuario = Usuario.query.get(usuario_id)
+        if not usuario:
+            return jsonify({'exito': False, 'mensaje': 'Usuario no encontrado'}), 404
+            
+        cliente = Cliente.query.filter_by(email=usuario.email).first()
+        if not cliente:
+            return jsonify({'exito': False, 'mensaje': 'Cliente no encontrado'}), 404
+            
+        direccion = Direccion.query.filter_by(id_direccion=id_direccion, id_cliente=cliente.id_cliente).first()
+        if not direccion:
+            return jsonify({'exito': False, 'mensaje': 'Dirección no encontrada o no pertenece al usuario'}), 404
+            
+        db_sql.session.delete(direccion)
+        db_sql.session.commit()
+        
+        return jsonify({'exito': True, 'mensaje': 'Dirección eliminada correctamente'}), 200
+    except Exception as e:
+        db_sql.session.rollback()
+        return jsonify({'exito': False, 'mensaje': f'Error al eliminar dirección: {str(e)}'}), 500

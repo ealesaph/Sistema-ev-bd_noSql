@@ -18,14 +18,12 @@ for filename, tag in files_and_tags:
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Add the import if not present
     if "ListaProductosPorCategoria" not in content:
         content = content.replace(
             "import MainFooter from './components/footer'",
             "import MainFooter from './components/footer'\nimport ListaProductosPorCategoria from './components/ListaProductosPorCategoria'"
         )
 
-    # Replace the paragraph with the component
     content = re.sub(
         r"<p>Contenido de.*?próximamente\.\.\.</p>",
         f'<ListaProductosPorCategoria etiqueta="{tag}" />',

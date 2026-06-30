@@ -13,7 +13,6 @@ export default function MainHeader () {
         const token = localStorage.getItem('token');
         
         if (u && token) {
-            // Verificar validez del token en el backend
             fetch('/leo/auth/verify', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -23,7 +22,6 @@ export default function MainHeader () {
                 if (res.ok) {
                     setUsuario(JSON.parse(u));
                 } else {
-                    // Token expirado o inválido, limpiar sesión
                     localStorage.removeItem('token');
                     localStorage.removeItem('usuario');
                     setUsuario(null);
@@ -31,7 +29,6 @@ export default function MainHeader () {
             })
             .catch(err => {
                 console.error('Error al verificar token:', err);
-                // Si hay error de red temporal, mantenemos la sesión visual
                 try {
                     setUsuario(JSON.parse(u));
                 } catch (e) {
@@ -63,10 +60,30 @@ export default function MainHeader () {
                     <div className="d-flex align-items-center gap-3">
                         {usuario ? (
                             <div className="d-flex align-items-center gap-2 bg-light p-2 rounded shadow-sm">
-                                <span className="text-secondary fw-bold header-user-status-text">
+                                <span className="text-secondary fw-bold header-user-status-text me-2">
                                     <i className="bi bi-person-fill me-1 text-primary"></i>
                                     {usuario.nombre}
                                 </span>
+                                {usuario.rol === 'Administrador' ? (
+                                    <>
+                                        <Link to="/admin/clientes" className="btn btn-sm btn-outline-secondary rounded-pill px-2 fw-bold me-1">
+                                            Clientes
+                                        </Link>
+                                        <Link to="/admin/stock" className="btn btn-sm btn-outline-secondary rounded-pill px-2 fw-bold me-1">
+                                            Stock
+                                        </Link>
+                                        <Link to="/admin/facturacion" className="btn btn-sm btn-outline-secondary rounded-pill px-2 fw-bold me-1">
+                                            Finanzas
+                                        </Link>
+                                        <Link to="/admin/proveedores" className="btn btn-sm btn-outline-secondary rounded-pill px-2 fw-bold me-1">
+                                            Proveedores
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <Link to="/pedidosCliente" className="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold me-1">
+                                        Mis Pedidos
+                                    </Link>
+                                )}
                                 <button className="btn btn-sm btn-outline-danger rounded-pill px-3" onClick={handleLogout}>
                                     Salir
                                 </button>

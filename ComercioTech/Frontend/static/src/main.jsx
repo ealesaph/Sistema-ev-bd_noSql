@@ -14,6 +14,11 @@ import LoginUsuario from './loginUsuario.jsx'
 import RegistroUsuario from './registroUsuario.jsx'
 import CarritoCliente from './carritoCliente.jsx'
 import DetalleProducto from './detalleProducto.jsx'
+import PedidosCliente from './pedidosCliente.jsx'
+import ModuloGestionClientes from './moduloGestionClientes.jsx'
+import ModuloStock from './moduloStock.jsx'
+import ModuloFacturacion from './moduloFacturacion.jsx'
+import ModuloProveedores from './moduloProveedores.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 
@@ -32,8 +37,33 @@ createRoot(document.getElementById('root')).render(
         <Route path="/loginUsuario" element={<LoginUsuario />} />
         <Route path="/registroUsuario" element={<RegistroUsuario />} />
         <Route path="/carritoCliente" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['Cliente']}>
             <CarritoCliente />
+          </ProtectedRoute>
+        } />
+        <Route path="/pedidosCliente" element={
+          <ProtectedRoute allowedRoles={['Cliente']}>
+            <PedidosCliente />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/clientes" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <ModuloGestionClientes />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/stock" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <ModuloStock />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/facturacion" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <ModuloFacturacion />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/proveedores" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <ModuloProveedores />
           </ProtectedRoute>
         } />
         <Route path="/producto/:id" element={<DetalleProducto />} />

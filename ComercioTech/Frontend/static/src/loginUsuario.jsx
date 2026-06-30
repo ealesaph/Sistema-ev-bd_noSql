@@ -31,9 +31,13 @@ export default function LoginUsuario() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
-        // Alertas de éxito y redirección
+        // Alertas de éxito y redirección dinámica por rol
         alert('¡Inicio de sesión exitoso!');
-        navigate('/');
+        if (data.usuario.rol === 'Administrador') {
+          navigate('/admin/clientes');
+        } else {
+          navigate('/');
+        }
       } else {
         setError(data.mensaje || 'Error al iniciar sesión');
       }
