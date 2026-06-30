@@ -1,1 +1,0 @@
-1) EN CONFIG en el DATABASE hay que cambiar los parametros de la conexión SQL, los deje indicados para que sepan la estructura
