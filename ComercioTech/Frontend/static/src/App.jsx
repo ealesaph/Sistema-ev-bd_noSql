@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainHeader from './components/header';
 import MainFooter from './components/footer';
-import Carroussel from './components/carrusel';
+import Landing from './Landing';
 
 function App() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ function App() {
   return (
     <>
       <MainHeader />
-      <Carroussel/>
+      <Landing />
       <MainFooter />
     </>
   );
